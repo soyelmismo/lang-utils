@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a2e"/>
+      <stop offset="100%" style="stop-color:#16213e"/>
+    </linearGradient>
+  </defs>
+  <rect width="48" height="48" rx="10" fill="url(#bg)"/>
+  <circle cx="24" cy="20" r="9" fill="none" stroke="#e94560" stroke-width="2"/>
+  <text x="24" y="24" text-anchor="middle" font-size="11" fill="#e94560" font-weight="bold">🌐</text>
+  <text x="24" y="40" text-anchor="middle" font-size="7" fill="#aaa" font-weight="600">LU</text>
+</svg>

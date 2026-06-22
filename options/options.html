@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="options_title">Lang Utils - Configuracion</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="container">
+    <div class="page-header">
+      <h1>Lang Utils</h1>
+      <p data-i18n="options_subtitle">Configura tu API y crea herramientas personalizadas de lenguaje con IA</p>
+    </div>
+
+    <!-- API Settings -->
+    <div class="section">
+      <h2 class="section-title" data-i18n="options_api_config">Configuracion de API</h2>
+      <form id="settings-form">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>API Base URL</label>
+            <input type="text" id="api-url" placeholder="https://api.openai.com/v1" />
+            <span class="hint" data-i18n="options_api_url_hint">Compatible con OpenAI, OpenRouter, LM Studio, Ollama, vLLM, etc.</span>
+          </div>
+          <div class="form-group">
+            <label>API Key</label>
+            <div class="input-with-btn">
+              <input type="password" id="api-key" placeholder="sk-..." />
+              <button type="button" id="toggle-key">&#128065;</button>
+            </div>
+            <span class="hint" data-i18n="options_api_key_hint">Tu clave API. Se almacena localmente en Firefox.</span>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label data-i18n="options_model">Modelo</label>
+              <input type="text" id="model" placeholder="gpt-4o-mini" />
+              <span class="hint" data-i18n="options_model_hint">Ej: gpt-4o, gpt-3.5-turbo, llama3, qwen2.5</span>
+            </div>
+            <div class="form-group">
+              <label data-i18n="options_temperature">Temperature</label>
+              <input type="number" id="temperature" placeholder="0.7" min="0" max="2" step="0.1" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label data-i18n="options_main_language">Idioma principal</label>
+              <select id="main-language">
+                <option value="es">Espanol</option>
+                <option value="en">English</option>
+                <option value="pt">Portugues</option>
+                <option value="fr">Francais</option>
+                <option value="de">Deutsch</option>
+                <option value="it">Italiano</option>
+                <option value="zh">Chino (Mandarin)</option>
+                <option value="ja">Japones</option>
+                <option value="ko">Coreano</option>
+                <option value="ar">Arabe</option>
+                <option value="hi">Hindi</option>
+                <option value="ru">Ruso</option>
+                <option value="nl">Holandes</option>
+                <option value="pl">Polaco</option>
+                <option value="tr">Turco</option>
+              </select>
+              <span class="hint" data-i18n="options_main_language_hint">Idioma para traducir modos y auto-detectar</span>
+            </div>
+          </div>
+          <div class="btn-row">
+            <button type="submit" class="btn-primary" data-i18n="options_save">Guardar</button>
+            <button type="button" id="test-api-btn" class="btn-secondary" data-i18n="options_test_connection">Probar conexion</button>
+            <span id="save-status" class="status-text"></span>
+            <span id="api-test-status" class="status-text"></span>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Modes CRUD -->
+    <div class="section">
+      <div class="modes-header">
+        <h2 data-i18n="options_modes_title">Modos / Herramientas</h2>
+        <div class="modes-header-actions">
+          <button id="add-mode-btn" class="btn-primary" data-i18n="options_add_mode">+ Nuevo Modo</button>
+          <button id="add-group-btn" class="btn-secondary" data-i18n="options_add_group">+ Nuevo Grupo</button>
+          <button id="reset-modes-btn" class="btn-danger" data-i18n="options_reset_defaults">Restaurar predeterminados</button>
+        </div>
+      </div>
+      <div id="modes-list"></div>
+      <div class="help-box">
+        <h4 data-i18n="options_prompt_variables">Variables disponibles en los prompts</h4>
+        <p><span data-i18n="options_prompt_variables_hint">Usa <code>{{selection}}</code> para insertar el texto seleccionado por el usuario.</span></p>
+        <p><span data-i18n="options_prompt_variables_example">Ejemplo: <code>Traduce esto al frances: {{selection}}</code></span></p>
+      </div>
+    </div>
+
+    <!-- Translate Write Settings -->
+    <div class="section">
+      <h2 class="section-title" data-i18n="options_tw_title">Modo Traductor / Redactor</h2>
+      <form id="tw-settings-form">
+        <div class="form-grid">
+          <div class="form-row">
+            <div class="form-group">
+              <label data-i18n="options_tw_target_lang">Idioma destino</label>
+              <select id="tw-target-lang">
+                <option value="es">Espanol</option>
+                <option value="en">English</option>
+                <option value="pt">Portugues</option>
+                <option value="fr">Francais</option>
+                <option value="de">Deutsch</option>
+                <option value="it">Italiano</option>
+                <option value="zh">Chino (Mandarin)</option>
+                <option value="ja">Japones</option>
+                <option value="ko">Coreano</option>
+                <option value="ru">Ruso</option>
+                <option value="nl">Holandes</option>
+                <option value="pl">Polaco</option>
+                <option value="tr">Turco</option>
+              </select>
+              <span class="hint" data-i18n="options_tw_target_lang_hint">Idioma al que se traducira tu texto mientras escribes</span>
+            </div>
+            <div class="form-group">
+              <label data-i18n="options_tw_debounce">Debounce (milisegundos)</label>
+              <input type="number" id="tw-debounce" placeholder="1500" min="500" max="5000" step="100" />
+              <span class="hint" data-i18n="options_tw_debounce_hint">Tiempo de espera despues de dejar de escribir (500-5000ms)</span>
+            </div>
+          </div>
+          <div class="btn-row">
+            <button type="submit" class="btn-primary" data-i18n="options_save">Guardar</button>
+            <span id="tw-save-status" class="status-text"></span>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Add/Edit Mode -->
+  <div id="mode-modal" class="modal-overlay">
+    <div class="modal">
+      <h3 id="modal-title" data-i18n="modal_new_mode">Nuevo Modo</h3>
+      <form id="mode-form">
+        <input type="hidden" id="mode-id" />
+        <input type="hidden" id="mode-type" value="single" />
+        <div class="form-group">
+          <label data-i18n="mode_name">Nombre del modo</label>
+          <input type="text" id="mode-name" data-i18n-placeholder="mode_name_placeholder" placeholder="Ej: Traducir al aleman" required />
+        </div>
+        <div id="single-mode-fields">
+          <div class="form-group">
+            <label data-i18n="mode_prompt">Prompt (instruccion para la IA)</label>
+            <textarea id="mode-prompt" data-i18n-placeholder="mode_prompt_placeholder" placeholder="Usa {{selection}} donde quieras que se inserte el texto seleccionado..." required></textarea>
+            <span class="hint" data-i18n="mode_prompt_hint">Incluye {{selection}} para insertar el texto seleccionado.</span>
+          </div>
+          <div class="form-group">
+            <label data-i18n="mode_model_optional">Modelo (opcional)</label>
+            <input type="text" id="mode-model" data-i18n-placeholder="mode_model_placeholder" placeholder="Vacio = usar modelo global" />
+            <span class="hint" data-i18n="mode_model_hint">Deja vacio para usar el modelo configurado arriba.</span>
+          </div>
+        </div>
+        <div id="group-mode-fields" style="display:none">
+          <p class="hint" style="margin-bottom:12px" data-i18n="group_description">Los grupos contienen sub-modes que aparecen como submenu en el menu contextual y toolbar. Agrega sub-modes despues de crear el grupo.</p>
+        </div>
+        <div class="form-group" style="margin-top:12px">
+          <label data-i18n="presets_label">Presets rapidos (clic para usar)</label>
+          <div class="presets-grid">
+            <button type="button" class="preset-btn" data-prompt="Traduce el siguiente texto al frances. Responde SOLO con la traduccion:\n\n{{selection}}" data-i18n="preset_translate">Traducir</button>
+            <button type="button" class="preset-btn" data-prompt="Corrige todos los errores ortograficos y gramaticales. Responde SOLO con el texto corregido:\n\n{{selection}}" data-i18n="preset_fix">Corregir</button>
+            <button type="button" class="preset-btn" data-prompt="Reescribe el siguiente texto con un tono mas formal y profesional:\n\n{{selection}}" data-i18n="preset_formal">Formalizar</button>
+            <button type="button" class="preset-btn" data-prompt="Reescribe el siguiente texto de forma mas casual y cercana:\n\n{{selection}}" data-i18n="preset_informal">Informalizar</button>
+            <button type="button" class="preset-btn" data-prompt="Extrae los puntos clave del siguiente texto como una lista con bullets:\n\n{{selection}}" data-i18n="preset_keypoints">Puntos clave</button>
+            <button type="button" class="preset-btn" data-prompt="Genera codigo basandote en la siguiente descripcion. Incluye comentarios:\n\n{{selection}}" data-i18n="preset_code">Generar codigo</button>
+            <button type="button" class="preset-btn" data-prompt="Convierte el siguiente texto a formato JSON valido:\n\n{{selection}}" data-i18n="preset_json">A JSON</button>
+            <button type="button" class="preset-btn" data-prompt="Explica este texto como si le hablaras a un nino de 10 anios:\n\n{{selection}}" data-i18n="preset_eli5">ELI5</button>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" id="modal-cancel" class="btn-secondary" data-i18n="modal_cancel">Cancelar</button>
+          <button type="submit" class="btn-primary" data-i18n="modal_save_mode">Guardar modo</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Add/Edit Sub-Mode -->
+  <div id="sub-modal" class="modal-overlay">
+    <div class="modal">
+      <h3 id="sub-modal-title" data-i18n="modal_new_sub">Nuevo Sub-Mode</h3>
+      <form id="sub-form">
+        <input type="hidden" id="sub-group-id" />
+        <input type="hidden" id="sub-id" />
+        <div class="form-group">
+          <label data-i18n="sub_mode_name">Nombre del sub-mode</label>
+          <input type="text" id="sub-name" data-i18n-placeholder="sub_mode_name_placeholder" placeholder="Ej: Informal" required />
+        </div>
+        <div class="form-group">
+          <label data-i18n="mode_prompt">Prompt (instruccion para la IA)</label>
+          <textarea id="sub-prompt" data-i18n-placeholder="mode_prompt_placeholder" placeholder="Usa {{selection}} donde quieras que se inserte el texto seleccionado..." required></textarea>
+        </div>
+        <div class="form-group">
+          <label data-i18n="sub_mode_model">Modelo (opcional, hereda del grupo si vacio)</label>
+          <input type="text" id="sub-model" data-i18n-placeholder="sub_mode_model_placeholder" placeholder="Vacio = heredar del grupo o global" />
+        </div>
+        <div class="modal-actions">
+          <button type="button" id="sub-modal-cancel" class="btn-secondary" data-i18n="modal_cancel">Cancelar</button>
+          <button type="submit" class="btn-primary" data-i18n="modal_save_sub">Guardar sub-mode</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="../i18n.js"></script>
+  <script src="../utils.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

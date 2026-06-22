@@ -1,0 +1,26 @@
+# Build artifacts
+*.xpi
+build/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Logs
+*.log
+
+# Env / secrets (in case future contributors add them)
+.env
+.env.local
