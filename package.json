@@ -8,9 +8,10 @@
     "typecheck": "tsc --noEmit",
     "build": "node scripts/build.mjs",
     "build:watch": "node scripts/build.mjs --watch",
-    "package": "node scripts/build.mjs && cd dist && zip -r ../lang-utils-$npm_package_version.zip . -x '*.DS_Store'",
-    "package:firefox": "node scripts/build.mjs --target=firefox && cd dist && zip -r ../lang-utils-$npm_package_version.firefox.zip . -x '*.DS_Store'",
-    "package:chrome": "node scripts/build.mjs --target=chrome && cd dist && zip -r ../lang-utils-$npm_package_version.chrome.zip . -x '*.DS_Store'"
+    "package": "node scripts/package.mjs",
+    "package:chrome": "node scripts/package.mjs --target=chrome",
+    "package:firefox": "node scripts/package.mjs --target=firefox",
+    "package:no-build": "node scripts/package.mjs --no-build"
   },
   "keywords": [
     "browser-extension",
