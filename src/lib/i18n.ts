@@ -87,6 +87,7 @@ const EN_MESSAGES: Record<MessageKey, string> = {
   options_themes_border_strong: "Strong border",
   options_themes_text: "Text",
   options_themes_text_muted: "Muted text",
+  options_themes_text_on_accent: "Text on accent",
   options_themes_accent: "Accent",
   options_themes_accent_hover: "Accent (hover)",
   options_themes_success: "Success",

@@ -21,6 +21,7 @@
   --lu-warning: #facc15;
   --lu-danger: #f87171;
   --lu-favorite: #facc15;
+  --lu-text-on-accent: #ffffff;
 
   /* Derived (computed once, used everywhere) */
   --lu-radius: 8px;

@@ -35,7 +35,7 @@ body {
 }
 
 .page-header p {
-  color: #888;
+  color: var(--lu-text-muted);
   font-size: 15px;
 }
 
@@ -79,7 +79,7 @@ body {
 .form-group label {
   font-size: 13px;
   font-weight: 600;
-  color: #ccc;
+  color: var(--lu-text);
 }
 
 .form-group input,
@@ -118,7 +118,7 @@ body {
 .input-with-btn button {
   background: var(--lu-border);
   border: 1px solid var(--lu-border-strong);
-  color: #ccc;
+  color: var(--lu-text);
   padding: 8px 12px;
   border-radius: 8px;
   cursor: pointer;
@@ -131,7 +131,7 @@ body {
 
 .hint {
   font-size: 12px;
-  color: #666;
+  color: var(--lu-text-muted);
 }
 
 /* Buttons */
@@ -143,7 +143,7 @@ body {
 
 .btn-primary {
   background: var(--lu-accent);
-  color: #fff;
+  color: var(--lu-text-on-accent, #fff);
   border: none;
   padding: 10px 24px;
   border-radius: 8px;
@@ -239,7 +239,7 @@ body {
 
 .mode-card-name {
   font-weight: 600;
-  color: #eee;
+  color: var(--lu-text);
 }
 
 .mode-card-actions {
@@ -256,7 +256,7 @@ body {
   padding: 3px 8px;
   border-radius: 4px;
   transition: all 0.2s;
-  color: #aaa;
+  color: var(--lu-text-muted);
 }
 
 .mode-card-actions button:hover {
@@ -266,7 +266,7 @@ body {
 
 .mode-card-prompt {
   font-size: 12px;
-  color: #888;
+  color: var(--lu-text-muted);
   line-height: 1.5;
   word-break: break-word;
 }
@@ -310,7 +310,7 @@ body {
 
 /* Favorite button */
 .mode-fav-btn {
-  color: #666 !important;
+  color: var(--lu-text-muted) !important;
   font-size: 16px !important;
   padding: 2px 6px !important;
 }
@@ -358,7 +358,7 @@ body {
 }
 
 .help-box p {
-  color: #888;
+  color: var(--lu-text-muted);
   font-size: 13px;
   margin-bottom: 4px;
 }
@@ -442,7 +442,7 @@ body {
 
 .mode-count {
   font-size: 12px;
-  color: #888;
+  color: var(--lu-text-muted);
   font-weight: normal;
 }
 
@@ -467,7 +467,7 @@ body {
 }
 
 .sub-mode-name {
-  color: #ccc;
+  color: var(--lu-text);
   font-size: 13px;
   font-family: monospace;
 }
@@ -484,18 +484,18 @@ body {
   font-size: 12px;
   padding: 2px 6px;
   border-radius: 4px;
-  color: #888;
+  color: var(--lu-text-muted);
   transition: all 0.2s;
 }
 
 .sub-mode-actions button:hover {
   background: var(--lu-border);
-  color: #eee;
+  color: var(--lu-text);
 }
 
 .sub-mode-prompt {
   font-size: 11px;
-  color: #666;
+  color: var(--lu-text-muted);
   margin-top: 4px;
   word-break: break-word;
 }

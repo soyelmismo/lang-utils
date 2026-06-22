@@ -56,6 +56,7 @@ export type MessageKey =
   | "options_themes_border_strong"
   | "options_themes_text"
   | "options_themes_text_muted"
+  | "options_themes_text_on_accent"
   | "options_themes_accent"
   | "options_themes_accent_hover"
   | "options_themes_success"

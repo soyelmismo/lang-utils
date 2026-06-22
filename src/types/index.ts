@@ -107,6 +107,7 @@ export interface CustomTheme {
   borderStrong: string;
   text: string;
   textMuted: string;
+  textOnAccent: string;
   accent: string;
   accentHover: string;
   success: string;
@@ -205,6 +206,7 @@ export const DEFAULT_THEME_SETTINGS: ThemeSettings = {
     borderStrong: "#0f3460",
     text: "#e0e0e0",
     textMuted: "#888888",
+    textOnAccent: "#ffffff",
     accent: "#e94560",
     accentHover: "#c73650",
     success: "#4ade80",

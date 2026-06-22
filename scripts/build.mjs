@@ -95,9 +95,10 @@ async function copyStatic() {
   await copyDir(path.join(SRC, "_locales"), path.join(DIST, "_locales"));
   console.log("  ✓ _locales/");
 
-  // HTML files for popup, options, chatbot
+  // HTML + CSS files for popup, options, chatbot
   for (const page of ["popup", "options", "chatbot"]) {
     const htmlSrc = path.join(SRC, page, `${page}.html`);
+    const cssSrc = path.join(SRC, page, `${page}.css`);
     try {
       await fs.access(htmlSrc);
       await fs.mkdir(path.join(DIST, page), { recursive: true });
@@ -105,6 +106,14 @@ async function copyStatic() {
       console.log(`  ✓ ${page}/${page}.html`);
     } catch {
       // Page doesn't exist, skip
+    }
+    try {
+      await fs.access(cssSrc);
+      await fs.mkdir(path.join(DIST, page), { recursive: true });
+      await fs.copyFile(cssSrc, path.join(DIST, page, `${page}.css`));
+      console.log(`  ✓ ${page}/${page}.css`);
+    } catch {
+      // CSS doesn't exist, skip
     }
   }
 

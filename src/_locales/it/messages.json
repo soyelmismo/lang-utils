@@ -1,161 +1,455 @@
 {
-  "extensionName": { "message": "Lang Utils" },
-  "extensionDescription": { "message": "Utilità linguistiche con IA: tradurre, riassumere, spiegare e altro" },
-
-  "popup_title": { "message": "Lang Utils" },
-  "popup_status_verifying": { "message": "Verifica in corso..." },
-  "popup_status_configured": { "message": "API configurata" },
-  "popup_status_not_configured": { "message": "API non configurata" },
-  "popup_status_configure_hint": { "message": "Imposta la tua API key per iniziare" },
-  "popup_status_model": { "message": "Modello: " },
-  "popup_status_error": { "message": "Errore" },
-  "popup_favorites": { "message": "Preferiti" },
-  "popup_settings": { "message": "Impostazioni" },
-  "popup_chatbot": { "message": "Chatbot" },
-  "popup_available_modes": { "message": "Modalità disponibili" },
-  "popup_no_modes": { "message": "Nessuna modalità configurata" },
-
-  "options_title": { "message": "Lang Utils - Impostazioni" },
-  "options_subtitle": { "message": "Configura la tua API e crea strumenti linguistici personalizzati con IA" },
-  "options_api_config": { "message": "Impostazioni API" },
-  "options_api_url_hint": { "message": "Compatibile con OpenAI, OpenRouter, LM Studio, Ollama, vLLM, ecc." },
-  "options_api_key_hint": { "message": "La tua chiave API. Salvata localmente in Firefox." },
-  "options_model": { "message": "Modello" },
-  "options_model_hint": { "message": "es. gpt-4o, gpt-3.5-turbo, llama3, qwen2.5" },
-  "options_temperature": { "message": "Temperatura" },
-  "options_main_language": { "message": "Lingua principale" },
-  "options_main_language_hint": { "message": "Lingua per tradurre le modalità e il rilevamento automatico" },
-  "options_save": { "message": "Salva" },
-  "options_test_connection": { "message": "Testa connessione" },
-  "options_saved": { "message": "Salvato" },
-  "options_testing": { "message": "Test in corso..." },
-  "options_modes_title": { "message": "Modalità / Strumenti" },
-  "options_add_mode": { "message": "+ Nuova Modalità" },
-  "options_add_group": { "message": "+ Nuovo Gruppo" },
-  "options_reset_defaults": { "message": "Ripristina predefiniti" },
-  "options_prompt_variables": { "message": "Variabili disponibili nei prompt" },
-  "options_prompt_variables_hint": { "message": "Usa {{selection}} per inserire il testo selezionato dall'utente." },
-  "options_prompt_variables_example": { "message": "Esempio: Traduci questo in francese: {{selection}}" },
-  "options_tw_title": { "message": "Modalità Traduci / Scrivi" },
-  "options_tw_target_lang": { "message": "Lingua di destinazione" },
-  "options_tw_target_lang_hint": { "message": "Lingua in cui il tuo testo verrà tradotto mentre digiti" },
-  "options_tw_debounce": { "message": "Debounce (millisecondi)" },
-  "options_tw_debounce_hint": { "message": "Tempo di attesa dopo aver smesso di digitare (500-5000ms)" },
-
-  "mode_name": { "message": "Nome modalità" },
-  "mode_name_placeholder": { "message": "es. Traduci in tedesco" },
-  "mode_prompt": { "message": "Prompt (istruzione per l'IA)" },
-  "mode_prompt_placeholder": { "message": "Usa {{selection}} dove vuoi che venga inserito il testo selezionato..." },
-  "mode_prompt_hint": { "message": "Includi {{selection}} per inserire il testo selezionato." },
-  "mode_model_optional": { "message": "Modello (facoltativo)" },
-  "mode_model_placeholder": { "message": "Vuoto = usa modello globale" },
-  "mode_model_hint": { "message": "Lascia vuoto per usare il modello configurato sopra." },
-  "group_description": { "message": "I gruppi contengono sotto-modalità che appaiono come sottomenu nel menu contestuale e nella barra degli strumenti. Aggiungi sotto-modalità dopo aver creato il gruppo." },
-  "presets_label": { "message": "Preset rapidi (clic per usare)" },
-  "preset_translate": { "message": "Traduci" },
-  "preset_fix": { "message": "Correggi" },
-  "preset_formal": { "message": "Formalizza" },
-  "preset_informal": { "message": "Rendi informale" },
-  "preset_keypoints": { "message": "Punti chiave" },
-  "preset_code": { "message": "Genera codice" },
-  "preset_json": { "message": "In JSON" },
-  "preset_eli5": { "message": "ELI5" },
-  "modal_cancel": { "message": "Annulla" },
-  "modal_save_mode": { "message": "Salva modalità" },
-  "modal_save_sub": { "message": "Salva sotto-modalità" },
-  "modal_new_mode": { "message": "Nuova Modalità" },
-  "modal_edit_mode": { "message": "Modifica Modalità" },
-  "modal_new_group": { "message": "Nuovo Gruppo" },
-  "modal_edit_group": { "message": "Modifica Gruppo" },
-  "modal_new_sub": { "message": "Nuova Sotto-Modalità" },
-  "modal_edit_sub": { "message": "Modifica Sotto-Modalità" },
-  "sub_mode_name": { "message": "Nome della sotto-modalità" },
-  "sub_mode_name_placeholder": { "message": "es. Informale" },
-  "sub_mode_model": { "message": "Modello (facoltativo, eredita dal gruppo se vuoto)" },
-  "sub_mode_model_placeholder": { "message": "Vuoto = eredita dal gruppo o globale" },
-  "confirm_reset": { "message": "Ripristinare le modalità predefinite? Le modalità personalizzate verranno eliminate." },
-  "confirm_delete": { "message": "Eliminare questa modalità?" },
-  "confirm_delete_sub": { "message": "Eliminare questa sotto-modalità?" },
-  "error_cannot_delete": { "message": "Non puoi eliminare le modalità predefinite." },
-  "no_modes": { "message": "Nessuna modalità configurata" },
-  "sub_modes_count": { "message": "sotto-modalità" },
-  "type_group": { "message": "Gruppo" },
-  "type_mode": { "message": "Modalità" },
-
-  "content_copy": { "message": "Copia" },
-  "content_close": { "message": "Chiudi" },
-  "content_result": { "message": "Risultato" },
-  "content_error": { "message": "Errore" },
-  "content_processing": { "message": "Elaborazione con IA..." },
-  "content_copy_all": { "message": "Copia tutto" },
-  "content_confirm_yes": { "message": "Sì, elabora" },
-  "content_confirm_no": { "message": "Annulla" },
-  "content_undo": { "message": "Annulla" },
-  "content_tw_active": { "message": "Modalità traduzione attiva" },
-  "content_tw_stop": { "message": "Ferma traduzione" },
-  "content_tw_activate": { "message": "Attiva modalità traduzione" },
-
-  "chatbot_title": { "message": "Lang Utils Chat" },
-  "chatbot_context_label": { "message": "Testo selezionato:" },
-  "chatbot_no_text": { "message": "(Nessun testo selezionato)" },
-  "chatbot_greeting": { "message": "Ciao! Sono il tuo assistente Lang Utils. Posso aiutarti ad analizzare, tradurre, riassumere o spiegare il testo selezionato. Cosa vorresti sapere?" },
-  "chatbot_input_placeholder": { "message": "Fai una domanda sul testo..." },
-  "chatbot_summarize": { "message": "Riassumi" },
-  "chatbot_explain": { "message": "Spiega" },
-  "chatbot_keypoints": { "message": "Punti chiave" },
-  "chatbot_translate_en": { "message": "Traduci EN" },
-  "chatbot_translate_es": { "message": "Traduci ES" },
-
-  "bg_api_not_configured": { "message": "Nessuna chiave API configurata. Vai alle impostazioni dell'estensione." },
-  "bg_lang_detection_failed": { "message": "Rilevamento della lingua non riuscito" },
-  "bg_same_lang_confirm": { "message": "Il testo è già in " },
-  "bg_same_lang_confirm_suffix": { "message": ". Elaborare comunque?" },
-
-  "lang_es": { "message": "Español" },
-  "lang_en": { "message": "English" },
-  "lang_pt": { "message": "Português" },
-  "lang_fr": { "message": "Français" },
-  "lang_de": { "message": "Deutsch" },
-  "lang_it": { "message": "Italiano" },
-  "lang_zh": { "message": "中文" },
-  "lang_ja": { "message": "日本語" },
-  "lang_ko": { "message": "한국어" },
-  "lang_ru": { "message": "Русский" },
-  "lang_nl": { "message": "Nederlands" },
-  "lang_pl": { "message": "Polski" },
-  "lang_tr": { "message": "Türkçe" },
-  "lang_ar": { "message": "العربية" },
-  "lang_hi": { "message": "हिन्दी" },
-
-  "content_copied": { "message": " Copiato!" },
-  "bg_system_prompt": { "message": "Sei un assistente di utilità linguistiche. Rispondi in modo chiaro e diretto." },
-  "bg_test_prompt": { "message": "Rispondi solo con la parola OK" },
-  "bg_chatbot_menu": { "message": "Chiedi sul testo..." },
-  "bg_chatbot_system": { "message": "Sei un assistente Lang Utils. L'utente ha selezionato il seguente testo da una pagina web e vuole discuterne con te. Rispondi in modo chiaro, utile e conciso.\n\n" },
-  "bg_chatbot_lang_hint": { "message": "Rispondi nella stessa lingua in cui scrive l'utente. Se non specifica una lingua, rispondi in italiano." },
-
-  "options_themes_title": { "message": "Tema" },
-  "options_themes_select": { "message": "Seleziona un tema" },
-  "options_themes_customize": { "message": "Personalizza i colori" },
-  "options_themes_bg": { "message": "Sfondo" },
-  "options_themes_bg_panel": { "message": "Sfondo del pannello" },
-  "options_themes_bg_input": { "message": "Sfondo del campo" },
-  "options_themes_border": { "message": "Bordo" },
-  "options_themes_border_strong": { "message": "Bordo forte" },
-  "options_themes_text": { "message": "Testo" },
-  "options_themes_text_muted": { "message": "Testo attenuato" },
-  "options_themes_accent": { "message": "Accento" },
-  "options_themes_accent_hover": { "message": "Accento (hover)" },
-  "options_themes_success": { "message": "Successo" },
-  "options_themes_warning": { "message": "Avviso" },
-  "options_themes_danger": { "message": "Pericolo" },
-  "options_themes_favorite": { "message": "Stella preferito" },
-  "options_themes_preset_midnight": { "message": "Mezzanotte" },
-  "options_themes_preset_light": { "message": "Chiaro" },
-  "options_themes_preset_ocean": { "message": "Oceano" },
-  "options_themes_preset_solarized": { "message": "Solarizzato" },
-  "options_themes_preset_rose": { "message": "Rosa" },
-  "options_themes_apply": { "message": "Applica tema" },
-  "options_themes_export": { "message": "Esporta tema" },
-  "options_themes_import": { "message": "Importa tema" }
+  "extensionName": {
+    "message": "Lang Utils"
+  },
+  "extensionDescription": {
+    "message": "Utilità linguistiche con IA: tradurre, riassumere, spiegare e altro"
+  },
+  "popup_title": {
+    "message": "Lang Utils"
+  },
+  "popup_status_verifying": {
+    "message": "Verifica in corso..."
+  },
+  "popup_status_configured": {
+    "message": "API configurata"
+  },
+  "popup_status_not_configured": {
+    "message": "API non configurata"
+  },
+  "popup_status_configure_hint": {
+    "message": "Imposta la tua API key per iniziare"
+  },
+  "popup_status_model": {
+    "message": "Modello: "
+  },
+  "popup_status_error": {
+    "message": "Errore"
+  },
+  "popup_favorites": {
+    "message": "Preferiti"
+  },
+  "popup_settings": {
+    "message": "Impostazioni"
+  },
+  "popup_chatbot": {
+    "message": "Chatbot"
+  },
+  "popup_available_modes": {
+    "message": "Modalità disponibili"
+  },
+  "popup_no_modes": {
+    "message": "Nessuna modalità configurata"
+  },
+  "options_title": {
+    "message": "Lang Utils - Impostazioni"
+  },
+  "options_subtitle": {
+    "message": "Configura la tua API e crea strumenti linguistici personalizzati con IA"
+  },
+  "options_api_config": {
+    "message": "Impostazioni API"
+  },
+  "options_api_url_hint": {
+    "message": "Compatibile con OpenAI, OpenRouter, LM Studio, Ollama, vLLM, ecc."
+  },
+  "options_api_key_hint": {
+    "message": "La tua chiave API. Salvata localmente in Firefox."
+  },
+  "options_model": {
+    "message": "Modello"
+  },
+  "options_model_hint": {
+    "message": "es. gpt-4o, gpt-3.5-turbo, llama3, qwen2.5"
+  },
+  "options_temperature": {
+    "message": "Temperatura"
+  },
+  "options_main_language": {
+    "message": "Lingua principale"
+  },
+  "options_main_language_hint": {
+    "message": "Lingua per tradurre le modalità e il rilevamento automatico"
+  },
+  "options_save": {
+    "message": "Salva"
+  },
+  "options_test_connection": {
+    "message": "Testa connessione"
+  },
+  "options_saved": {
+    "message": "Salvato"
+  },
+  "options_testing": {
+    "message": "Test in corso..."
+  },
+  "options_modes_title": {
+    "message": "Modalità / Strumenti"
+  },
+  "options_add_mode": {
+    "message": "+ Nuova Modalità"
+  },
+  "options_add_group": {
+    "message": "+ Nuovo Gruppo"
+  },
+  "options_reset_defaults": {
+    "message": "Ripristina predefiniti"
+  },
+  "options_prompt_variables": {
+    "message": "Variabili disponibili nei prompt"
+  },
+  "options_prompt_variables_hint": {
+    "message": "Usa {{selection}} per inserire il testo selezionato dall'utente."
+  },
+  "options_prompt_variables_example": {
+    "message": "Esempio: Traduci questo in francese: {{selection}}"
+  },
+  "options_tw_title": {
+    "message": "Modalità Traduci / Scrivi"
+  },
+  "options_tw_target_lang": {
+    "message": "Lingua di destinazione"
+  },
+  "options_tw_target_lang_hint": {
+    "message": "Lingua in cui il tuo testo verrà tradotto mentre digiti"
+  },
+  "options_tw_debounce": {
+    "message": "Debounce (millisecondi)"
+  },
+  "options_tw_debounce_hint": {
+    "message": "Tempo di attesa dopo aver smesso di digitare (500-5000ms)"
+  },
+  "mode_name": {
+    "message": "Nome modalità"
+  },
+  "mode_name_placeholder": {
+    "message": "es. Traduci in tedesco"
+  },
+  "mode_prompt": {
+    "message": "Prompt (istruzione per l'IA)"
+  },
+  "mode_prompt_placeholder": {
+    "message": "Usa {{selection}} dove vuoi che venga inserito il testo selezionato..."
+  },
+  "mode_prompt_hint": {
+    "message": "Includi {{selection}} per inserire il testo selezionato."
+  },
+  "mode_model_optional": {
+    "message": "Modello (facoltativo)"
+  },
+  "mode_model_placeholder": {
+    "message": "Vuoto = usa modello globale"
+  },
+  "mode_model_hint": {
+    "message": "Lascia vuoto per usare il modello configurato sopra."
+  },
+  "group_description": {
+    "message": "I gruppi contengono sotto-modalità che appaiono come sottomenu nel menu contestuale e nella barra degli strumenti. Aggiungi sotto-modalità dopo aver creato il gruppo."
+  },
+  "presets_label": {
+    "message": "Preset rapidi (clic per usare)"
+  },
+  "preset_translate": {
+    "message": "Traduci"
+  },
+  "preset_fix": {
+    "message": "Correggi"
+  },
+  "preset_formal": {
+    "message": "Formalizza"
+  },
+  "preset_informal": {
+    "message": "Rendi informale"
+  },
+  "preset_keypoints": {
+    "message": "Punti chiave"
+  },
+  "preset_code": {
+    "message": "Genera codice"
+  },
+  "preset_json": {
+    "message": "In JSON"
+  },
+  "preset_eli5": {
+    "message": "ELI5"
+  },
+  "modal_cancel": {
+    "message": "Annulla"
+  },
+  "modal_save_mode": {
+    "message": "Salva modalità"
+  },
+  "modal_save_sub": {
+    "message": "Salva sotto-modalità"
+  },
+  "modal_new_mode": {
+    "message": "Nuova Modalità"
+  },
+  "modal_edit_mode": {
+    "message": "Modifica Modalità"
+  },
+  "modal_new_group": {
+    "message": "Nuovo Gruppo"
+  },
+  "modal_edit_group": {
+    "message": "Modifica Gruppo"
+  },
+  "modal_new_sub": {
+    "message": "Nuova Sotto-Modalità"
+  },
+  "modal_edit_sub": {
+    "message": "Modifica Sotto-Modalità"
+  },
+  "sub_mode_name": {
+    "message": "Nome della sotto-modalità"
+  },
+  "sub_mode_name_placeholder": {
+    "message": "es. Informale"
+  },
+  "sub_mode_model": {
+    "message": "Modello (facoltativo, eredita dal gruppo se vuoto)"
+  },
+  "sub_mode_model_placeholder": {
+    "message": "Vuoto = eredita dal gruppo o globale"
+  },
+  "confirm_reset": {
+    "message": "Ripristinare le modalità predefinite? Le modalità personalizzate verranno eliminate."
+  },
+  "confirm_delete": {
+    "message": "Eliminare questa modalità?"
+  },
+  "confirm_delete_sub": {
+    "message": "Eliminare questa sotto-modalità?"
+  },
+  "error_cannot_delete": {
+    "message": "Non puoi eliminare le modalità predefinite."
+  },
+  "no_modes": {
+    "message": "Nessuna modalità configurata"
+  },
+  "sub_modes_count": {
+    "message": "sotto-modalità"
+  },
+  "type_group": {
+    "message": "Gruppo"
+  },
+  "type_mode": {
+    "message": "Modalità"
+  },
+  "content_copy": {
+    "message": "Copia"
+  },
+  "content_close": {
+    "message": "Chiudi"
+  },
+  "content_result": {
+    "message": "Risultato"
+  },
+  "content_error": {
+    "message": "Errore"
+  },
+  "content_processing": {
+    "message": "Elaborazione con IA..."
+  },
+  "content_copy_all": {
+    "message": "Copia tutto"
+  },
+  "content_confirm_yes": {
+    "message": "Sì, elabora"
+  },
+  "content_confirm_no": {
+    "message": "Annulla"
+  },
+  "content_undo": {
+    "message": "Annulla"
+  },
+  "content_tw_active": {
+    "message": "Modalità traduzione attiva"
+  },
+  "content_tw_stop": {
+    "message": "Ferma traduzione"
+  },
+  "content_tw_activate": {
+    "message": "Attiva modalità traduzione"
+  },
+  "chatbot_title": {
+    "message": "Lang Utils Chat"
+  },
+  "chatbot_context_label": {
+    "message": "Testo selezionato:"
+  },
+  "chatbot_no_text": {
+    "message": "(Nessun testo selezionato)"
+  },
+  "chatbot_greeting": {
+    "message": "Ciao! Sono il tuo assistente Lang Utils. Posso aiutarti ad analizzare, tradurre, riassumere o spiegare il testo selezionato. Cosa vorresti sapere?"
+  },
+  "chatbot_input_placeholder": {
+    "message": "Fai una domanda sul testo..."
+  },
+  "chatbot_summarize": {
+    "message": "Riassumi"
+  },
+  "chatbot_explain": {
+    "message": "Spiega"
+  },
+  "chatbot_keypoints": {
+    "message": "Punti chiave"
+  },
+  "chatbot_translate_en": {
+    "message": "Traduci EN"
+  },
+  "chatbot_translate_es": {
+    "message": "Traduci ES"
+  },
+  "bg_api_not_configured": {
+    "message": "Nessuna chiave API configurata. Vai alle impostazioni dell'estensione."
+  },
+  "bg_lang_detection_failed": {
+    "message": "Rilevamento della lingua non riuscito"
+  },
+  "bg_same_lang_confirm": {
+    "message": "Il testo è già in "
+  },
+  "bg_same_lang_confirm_suffix": {
+    "message": ". Elaborare comunque?"
+  },
+  "lang_es": {
+    "message": "Español"
+  },
+  "lang_en": {
+    "message": "English"
+  },
+  "lang_pt": {
+    "message": "Português"
+  },
+  "lang_fr": {
+    "message": "Français"
+  },
+  "lang_de": {
+    "message": "Deutsch"
+  },
+  "lang_it": {
+    "message": "Italiano"
+  },
+  "lang_zh": {
+    "message": "中文"
+  },
+  "lang_ja": {
+    "message": "日本語"
+  },
+  "lang_ko": {
+    "message": "한국어"
+  },
+  "lang_ru": {
+    "message": "Русский"
+  },
+  "lang_nl": {
+    "message": "Nederlands"
+  },
+  "lang_pl": {
+    "message": "Polski"
+  },
+  "lang_tr": {
+    "message": "Türkçe"
+  },
+  "lang_ar": {
+    "message": "العربية"
+  },
+  "lang_hi": {
+    "message": "हिन्दी"
+  },
+  "content_copied": {
+    "message": " Copiato!"
+  },
+  "bg_system_prompt": {
+    "message": "Sei un assistente di utilità linguistiche. Rispondi in modo chiaro e diretto."
+  },
+  "bg_test_prompt": {
+    "message": "Rispondi solo con la parola OK"
+  },
+  "bg_chatbot_menu": {
+    "message": "Chiedi sul testo..."
+  },
+  "bg_chatbot_system": {
+    "message": "Sei un assistente Lang Utils. L'utente ha selezionato il seguente testo da una pagina web e vuole discuterne con te. Rispondi in modo chiaro, utile e conciso.\n\n"
+  },
+  "bg_chatbot_lang_hint": {
+    "message": "Rispondi nella stessa lingua in cui scrive l'utente. Se non specifica una lingua, rispondi in italiano."
+  },
+  "options_themes_title": {
+    "message": "Tema"
+  },
+  "options_themes_select": {
+    "message": "Seleziona un tema"
+  },
+  "options_themes_customize": {
+    "message": "Personalizza i colori"
+  },
+  "options_themes_bg": {
+    "message": "Sfondo"
+  },
+  "options_themes_bg_panel": {
+    "message": "Sfondo del pannello"
+  },
+  "options_themes_bg_input": {
+    "message": "Sfondo del campo"
+  },
+  "options_themes_border": {
+    "message": "Bordo"
+  },
+  "options_themes_border_strong": {
+    "message": "Bordo forte"
+  },
+  "options_themes_text": {
+    "message": "Testo"
+  },
+  "options_themes_text_muted": {
+    "message": "Testo attenuato"
+  },
+  "options_themes_text_on_accent": {
+    "message": "Testo su accento"
+  },
+  "options_themes_accent": {
+    "message": "Accento"
+  },
+  "options_themes_accent_hover": {
+    "message": "Accento (hover)"
+  },
+  "options_themes_success": {
+    "message": "Successo"
+  },
+  "options_themes_warning": {
+    "message": "Avviso"
+  },
+  "options_themes_danger": {
+    "message": "Pericolo"
+  },
+  "options_themes_favorite": {
+    "message": "Stella preferito"
+  },
+  "options_themes_preset_midnight": {
+    "message": "Mezzanotte"
+  },
+  "options_themes_preset_light": {
+    "message": "Chiaro"
+  },
+  "options_themes_preset_ocean": {
+    "message": "Oceano"
+  },
+  "options_themes_preset_solarized": {
+    "message": "Solarizzato"
+  },
+  "options_themes_preset_rose": {
+    "message": "Rosa"
+  },
+  "options_themes_apply": {
+    "message": "Applica tema"
+  },
+  "options_themes_export": {
+    "message": "Esporta tema"
+  },
+  "options_themes_import": {
+    "message": "Importa tema"
+  }
 }
