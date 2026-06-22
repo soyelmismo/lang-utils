@@ -1,0 +1,563 @@
+/* ============================================
+   Lang Utils - Options Page Styles
+   ============================================ */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--lu-bg);
+  color: var(--lu-text);
+  font-family: var(--lu-font);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+/* Header */
+.page-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.page-header h1 {
+  font-size: 28px;
+  color: var(--lu-accent);
+  margin-bottom: 8px;
+}
+
+.page-header p {
+  color: #888;
+  font-size: 15px;
+}
+
+/* Sections */
+.section {
+  background: var(--lu-bg-panel);
+  border: 1px solid var(--lu-border);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.section-title {
+  font-size: 18px;
+  color: var(--lu-accent);
+  margin-bottom: 16px;
+}
+
+/* Form Grid */
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-row {
+  display: flex;
+  gap: 16px;
+}
+
+.form-row .form-group {
+  flex: 1;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ccc;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  background: var(--lu-bg);
+  border: 1px solid var(--lu-border);
+  color: var(--lu-text);
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--lu-accent);
+}
+
+.form-group textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.input-with-btn {
+  display: flex;
+  gap: 8px;
+}
+
+.input-with-btn input {
+  flex: 1;
+}
+
+.input-with-btn button {
+  background: var(--lu-border);
+  border: 1px solid var(--lu-border-strong);
+  color: #ccc;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.input-with-btn button:hover {
+  background: var(--lu-border-strong);
+}
+
+.hint {
+  font-size: 12px;
+  color: #666;
+}
+
+/* Buttons */
+.btn-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.btn-primary {
+  background: var(--lu-accent);
+  color: #fff;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.btn-primary:hover {
+  background: var(--lu-accent-hover);
+}
+
+.btn-secondary {
+  background: var(--lu-border);
+  color: var(--lu-text);
+  border: 1px solid var(--lu-border-strong);
+  padding: 10px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+  background: var(--lu-border-strong);
+}
+
+.btn-danger {
+  background: transparent;
+  color: var(--lu-danger);
+  border: 1px solid var(--lu-danger);
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.btn-danger:hover {
+  background: rgba(248, 113, 113, 0.1);
+}
+
+.status-text {
+  font-size: 13px;
+}
+
+/* Modes Header */
+.modes-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.modes-header h2 {
+  font-size: 18px;
+  color: var(--lu-accent);
+}
+
+.modes-header-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* Mode Cards */
+#modes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mode-card {
+  background: var(--lu-bg);
+  border: 1px solid var(--lu-border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  transition: border-color 0.2s;
+}
+
+.mode-card:hover {
+  border-color: var(--lu-border-strong);
+}
+
+.mode-card-translated {
+  border-color: var(--lu-success) !important;
+}
+
+.mode-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.mode-card-name {
+  font-weight: 600;
+  color: #eee;
+}
+
+.mode-card-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.mode-card-actions button {
+  background: none;
+  border: 1px solid var(--lu-border);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  transition: all 0.2s;
+  color: #aaa;
+}
+
+.mode-card-actions button:hover {
+  background: rgba(255,255,255,0.05);
+  border-color: var(--lu-border-strong);
+}
+
+.mode-card-prompt {
+  font-size: 12px;
+  color: #888;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.mode-card-badges {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.mode-badge {
+  display: inline-block;
+  background: rgba(233, 69, 96, 0.15);
+  color: var(--lu-accent);
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.mode-badge-model {
+  display: inline-block;
+  background: rgba(74, 222, 128, 0.15);
+  color: var(--lu-success);
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.mode-badge-translated {
+  display: inline-block;
+  background: rgba(74, 222, 128, 0.15);
+  color: var(--lu-success);
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+/* Favorite button */
+.mode-fav-btn {
+  color: #666 !important;
+  font-size: 16px !important;
+  padding: 2px 6px !important;
+}
+
+.mode-fav-btn:hover {
+  color: var(--lu-warning) !important;
+}
+
+.mode-fav-active {
+  color: var(--lu-warning) !important;
+}
+
+/* Translate / Undo buttons */
+.mode-translate-btn {
+  color: var(--lu-success) !important;
+}
+
+.mode-translate-btn:hover {
+  background: rgba(74, 222, 128, 0.15) !important;
+  border-color: var(--lu-success) !important;
+}
+
+.mode-undo-btn {
+  color: var(--lu-warning) !important;
+  font-size: 11px !important;
+}
+
+.mode-undo-btn:hover {
+  background: rgba(250, 204, 21, 0.15) !important;
+  border-color: var(--lu-warning) !important;
+}
+
+/* Help Box */
+.help-box {
+  margin-top: 16px;
+  padding: 14px;
+  background: rgba(233, 69, 96, 0.05);
+  border: 1px solid rgba(233, 69, 96, 0.2);
+  border-radius: 8px;
+}
+
+.help-box h4 {
+  color: var(--lu-accent);
+  margin-bottom: 8px;
+}
+
+.help-box p {
+  color: #888;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.help-box code {
+  background: var(--lu-border);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--lu-success);
+}
+
+/* Modal */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 2147483647;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal {
+  background: var(--lu-bg-panel);
+  border: 1px solid var(--lu-border-strong);
+  border-radius: 12px;
+  padding: 24px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.modal h3 {
+  color: var(--lu-accent);
+  margin-bottom: 16px;
+}
+
+.modal .form-group {
+  margin-bottom: 14px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+/* Presets */
+.presets-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.preset-btn {
+  background: var(--lu-border);
+  border: 1px solid var(--lu-border-strong);
+  color: var(--lu-text);
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+
+.preset-btn:hover {
+  background: var(--lu-border-strong);
+  border-color: var(--lu-accent);
+}
+
+/* Group card */
+.mode-card-group {
+  border-color: var(--lu-accent) !important;
+  background: rgba(233, 69, 96, 0.03);
+}
+
+.mode-count {
+  font-size: 12px;
+  color: #888;
+  font-weight: normal;
+}
+
+.sub-modes-list {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--lu-border);
+}
+
+.sub-mode-card {
+  background: rgba(15, 15, 35, 0.5);
+  border: 1px solid var(--lu-border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 6px;
+}
+
+.sub-mode-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sub-mode-name {
+  color: #ccc;
+  font-size: 13px;
+  font-family: monospace;
+}
+
+.sub-mode-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.sub-mode-actions button {
+  background: none;
+  border: 1px solid var(--lu-border);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #888;
+  transition: all 0.2s;
+}
+
+.sub-mode-actions button:hover {
+  background: var(--lu-border);
+  color: #eee;
+}
+
+.sub-mode-prompt {
+  font-size: 11px;
+  color: #666;
+  margin-top: 4px;
+  word-break: break-word;
+}
+
+.add-sub-btn {
+  background: var(--lu-border-strong) !important;
+  color: var(--lu-success) !important;
+  border: 1px solid var(--lu-success) !important;
+  font-size: 11px !important;
+  padding: 3px 10px !important;
+}
+
+.add-sub-btn:hover {
+  background: var(--lu-success) !important;
+  color: var(--lu-border-strong) !important;
+}
+
+/* Sub-modal presets hidden */
+#sub-modal .presets-grid { display: none; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--lu-bg); }
+::-webkit-scrollbar-thumb { background: var(--lu-border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--lu-border-strong); }
+
+/* ============================================
+   Theme customization grid
+   ============================================ */
+.theme-colors-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.theme-color-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  background: var(--lu-bg);
+  border: 1px solid var(--lu-border);
+  border-radius: var(--lu-radius);
+}
+
+.theme-color-item label {
+  font-size: 12px;
+  color: var(--lu-text-muted);
+  font-weight: 500;
+}
+
+.theme-color-item input[type="color"] {
+  width: 100%;
+  height: 36px;
+  border: 1px solid var(--lu-border-strong);
+  border-radius: 4px;
+  background: var(--lu-bg-input);
+  cursor: pointer;
+  padding: 2px;
+}
+
+.theme-color-item input[type="color"]:hover {
+  border-color: var(--lu-accent);
+}

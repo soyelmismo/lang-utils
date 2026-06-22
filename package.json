@@ -1,0 +1,31 @@
+{
+  "name": "lang-utils",
+  "version": "2.0.0",
+  "description": "AI language utilities browser extension: translate, summarize, explain and more. TypeScript + Manifest V3 (Chrome + Firefox).",
+  "type": "module",
+  "scripts": {
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit",
+    "build": "node scripts/build.mjs",
+    "build:watch": "node scripts/build.mjs --watch",
+    "package": "node scripts/build.mjs && cd dist && zip -r ../lang-utils-$npm_package_version.zip . -x '*.DS_Store'",
+    "package:firefox": "node scripts/build.mjs --target=firefox && cd dist && zip -r ../lang-utils-$npm_package_version.firefox.zip . -x '*.DS_Store'",
+    "package:chrome": "node scripts/build.mjs --target=chrome && cd dist && zip -r ../lang-utils-$npm_package_version.chrome.zip . -x '*.DS_Store'"
+  },
+  "keywords": [
+    "browser-extension",
+    "chrome-extension",
+    "firefox-extension",
+    "ai",
+    "translation",
+    "openai",
+    "manifest-v3"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@types/webextension-polyfill": "^0.12.1",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.7.2",
+    "webextension-polyfill": "^0.12.0"
+  }
+}

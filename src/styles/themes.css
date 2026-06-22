@@ -1,0 +1,33 @@
+/* ============================================
+   Lang Utils - Theme variables
+   These CSS variables are set by the theme manager
+   (src/lib/themes.ts) on :root. All extension pages
+   (popup, options, chatbot) and the content script's
+   injected UI use these variables so a single theme
+   change recolors everything.
+   ============================================ */
+
+:root {
+  --lu-bg: #0f0f23;
+  --lu-bg-panel: #1a1a2e;
+  --lu-bg-input: #0f0f23;
+  --lu-border: #16213e;
+  --lu-border-strong: #0f3460;
+  --lu-text: #e0e0e0;
+  --lu-text-muted: #888888;
+  --lu-accent: #e94560;
+  --lu-accent-hover: #c73650;
+  --lu-success: #4ade80;
+  --lu-warning: #facc15;
+  --lu-danger: #f87171;
+  --lu-favorite: #facc15;
+
+  /* Derived (computed once, used everywhere) */
+  --lu-radius: 8px;
+  --lu-radius-lg: 12px;
+  --lu-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --lu-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  --lu-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --lu-transition: all 0.2s ease;
+}

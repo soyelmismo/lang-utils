@@ -1,9 +1,12 @@
-# Lang Utils - Firefox Extension
+# Lang Utils
 
-Language utilities powered by AI: translate, rewrite, summarize, explain, and more using your preferred API (OpenAI, Ollama, LM Studio, OpenRouter, etc.).
+AI-powered language utilities browser extension: translate, rewrite, summarize, explain, and chat about selected text using any OpenAI-compatible API (OpenAI, OpenRouter, Ollama, LM Studio, vLLM, etc.).
 
-[![Firefox](https://img.shields.io/badge/Firefox-57%2B-blue?logo=firefox)](https://www.mozilla.org/firefox/)
-[![License](https://img.shields.io/badge/License-MIT-green)](#license)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue?logo=typescript)
+![Manifest V3](https://img.shields.io/badge/Manifest-V3-purple)
+![Firefox](https://img.shields.io/badge/Firefox-109%2B-blue?logo=firefox)
+![Chrome](https://img.shields.io/badge/Chrome-88%2B-green?logo=googlechrome)
+![License](https://img.shields.io/badge/License-MIT-green)
 
 ---
 
@@ -26,7 +29,6 @@ Type directly in any text field and it translates automatically:
 3. Select **"Activate translate mode"**
 4. Choose the target language
 5. Type — after a configurable pause, the text is translated and replaced
-6. If you keep typing, everything is re-translated together
 
 Configurable: debounce (500-5000ms), target language.
 
@@ -38,6 +40,32 @@ Configurable: debounce (500-5000ms), target language.
 - **Groups** — Organize tools in groups with sub-menus (e.g. "Rewrite" → Informal, Formal, etc.)
 - **Favorites** — Mark your most-used tools for quick access
 
+### Theming (new in v2.0)
+
+Pick from 5 built-in themes or customize every color:
+
+- **Midnight** — Dark blue/red (default)
+- **Light** — Clean white/gray
+- **Ocean** — Deep blue with teal accents
+- **Solarized** — The classic Solarized dark palette
+- **Rose** — Warm pink/magenta
+- **Custom** — Pick every color individually, then export/import as JSON
+
+Themes apply to all extension pages (popup, options, chatbot) AND to the content-script UI injected into web pages.
+
+### Full Multilanguage UI
+
+The extension's own interface is available in 6 languages:
+
+- 🇬🇧 English
+- 🇪🇸 Spanish (default)
+- 🇧🇷 Portuguese
+- 🇫🇷 French
+- 🇩🇪 German
+- 🇮🇹 Italian
+
+Switch language in **Settings → Main language**. The change applies immediately to all extension pages.
+
 ### Full CRUD
 
 - Create, edit, and delete custom modes
@@ -48,30 +76,47 @@ Configurable: debounce (500-5000ms), target language.
 
 ### Compatibility
 
-- Compatible with any OpenAI-compatible API (OpenAI, OpenRouter, Ollama, LM Studio, vLLM, etc.)
+- Compatible with any OpenAI-compatible API (`/v1/chat/completions`)
 - Stores your API key locally (never sent to external servers)
+- Works in Firefox 109+ and Chrome 88+
 
 ---
 
 ## Installation
 
-### Build
+### Build from source
 
 ```bash
-./build.sh
+# Install dependencies
+npm install
+
+# Typecheck + bundle into dist/
+npm run build
+
+# Or build + package as zip
+npm run package
+
+# Build for specific target
+npm run package:firefox
+npm run package:chrome
 ```
 
-Generates `lang-utils-{version}.xpi`.
+The output goes to `dist/` — load that folder directly in your browser as an unpacked extension.
 
-### Install in Firefox
+### Load in Firefox
 
-1. Open `about:config`
-2. Search `xpinstall.signatures.required` → set to `false`
-3. Restart Firefox
-4. Open `about:debugging#/runtime/this-firefox`
-5. **"Load Temporary Add-on..."** → select `manifest.json`
+1. Run `npm run build`
+2. Open `about:debugging#/runtime/this-firefox`
+3. Click **"Load Temporary Add-on..."**
+4. Select `dist/manifest.json`
 
-> **Note:** Temporary add-ons are removed on Firefox restart. Repeat step 5 after each restart.
+### Load in Chrome / Edge / Brave
+
+1. Run `npm run build`
+2. Open `chrome://extensions`
+3. Enable **Developer mode** (top-right)
+4. Click **"Load unpacked"**
+5. Select the `dist/` folder
 
 ---
 
@@ -90,9 +135,16 @@ Generates `lang-utils-{version}.xpi`.
 
 ### Translate Mode
 
-- **Target language**: 15 languages available
+- **Target language**: 13 languages available
 - **Debounce**: 500-5000ms (default: 1500ms)
 - Configured in Options page → "Translate / Write Mode"
+
+### Theme
+
+- Options page → "Theme"
+- Pick a preset or choose "Custom" to pick every color
+- Export your custom theme as JSON to share or back up
+- Import a previously-exported theme
 
 ---
 
@@ -119,6 +171,7 @@ Generates `lang-utils-{version}.xpi`.
 | Translate mode in input | Click input → LU → Activate translate mode |
 | Chatbot | Select text → right-click → Ask about text |
 | Settings | Click icon → Settings |
+| Change theme | Settings → Theme → pick preset or customize |
 
 ---
 
@@ -126,27 +179,45 @@ Generates `lang-utils-{version}.xpi`.
 
 ```
 lang-utils/
-├── manifest.json          # Extension config (Manifest V2)
-├── background.js          # Background script: API, menus, logic
-├── content.js             # Content script: UI injected into pages
-├── utils.js               # Shared utilities (escapeHtml, markdown, clipboard)
-├── build.sh               # Build script with syntax check
-├── generate-icons.sh      # Generates PNGs from SVGs
-├── icons/                 # Icons
-│   ├── icon-48.svg/png
-│   └── icon-96.svg/png
-├── popup/                 # Popup window
-│   ├── popup.html
-│   ├── popup.js
-│   └── popup.css
-├── options/               # Settings page
-│   ├── options.html
-│   ├── options.js
-│   └── options.css
-└── chatbot/               # Chatbot window
-    ├── chatbot.html
-    ├── chatbot.js
-    └── chatbot.css
+├── src/                          # TypeScript source
+│   ├── manifest.json             # MV3 manifest (cross-browser)
+│   ├── types/                    # Shared types (Mode, Settings, Theme, ...)
+│   │   ├── index.ts
+│   │   └── messages.ts           # i18n message keys
+│   ├── lib/                      # Shared libraries
+│   │   ├── browser-compat.ts     # webextension-polyfill wrapper
+│   │   ├── storage.ts            # Typed storage helpers
+│   │   ├── api.ts                # OpenAI-compatible API client
+│   │   ├── i18n.ts               # i18n manager
+│   │   ├── utils.ts              # escapeHtml, markdownToHtml, clipboard
+│   │   ├── themes.ts             # Theme manager + presets
+│   │   └── dom.ts                # Typed DOM helpers
+│   ├── background/
+│   │   ├── index.ts              # Entry point: wires up listeners
+│   │   ├── messaging.ts          # Message router + AI processing
+│   │   ├── modes.ts              # Default modes data
+│   │   └── mode-helpers.ts       # Pure mode helpers
+│   ├── content/
+│   │   ├── index.ts              # Panel, toolbar, form injection, TW
+│   │   └── styles.ts             # Injected CSS (uses theme vars)
+│   ├── popup/                    # Toolbar popup window
+│   ├── options/                  # Settings page (incl. theme UI)
+│   ├── chatbot/                  # Chat window
+│   ├── styles/
+│   │   └── themes.css            # CSS variables (defaults)
+│   └── _locales/                 # i18n message files
+│       ├── en/messages.json
+│       ├── es/messages.json
+│       ├── pt/messages.json
+│       ├── fr/messages.json
+│       ├── de/messages.json
+│       └── it/messages.json
+├── scripts/
+│   ├── build.mjs                 # esbuild-based bundler
+│   └── update-css.py             # Helper: replace hardcoded colors
+├── package.json
+├── tsconfig.json
+└── README.md
 ```
 
 ---
@@ -155,23 +226,25 @@ lang-utils/
 
 ### Requirements
 
-- Firefox 57+
-- Node.js (for syntax check in build)
-- zip
+- Node.js 18+
+- npm
 
 ### Build
 
 ```bash
-./build.sh
+npm install
+npm run build          # one-shot build → dist/
+npm run build:watch    # rebuild on file change
+npm run typecheck      # tsc --noEmit
 ```
 
-The build runs `node --check` on all `.js` files before packaging.
+### Architecture notes
 
-### Regenerate icons
-
-```bash
-./generate-icons.sh     # Requires ImageMagick
-```
+- **TypeScript strict mode** — `strict: true`, `noUnusedLocals`, `noUnusedParameters`, `noImplicitReturns`, `noFallthroughCasesInSwitch`, `noUncheckedIndexedAccess`. The whole codebase typechecks clean.
+- **Single source of truth** for browser API via `webextension-polyfill` (works in both Firefox and Chrome).
+- **CSS variables** drive theming — `--lu-bg`, `--lu-accent`, etc. — applied to `:root` by the theme manager.
+- **Manifest V3** with `service_worker` (Chrome) + `browser_specific_settings.gecko` (Firefox). The build script can emit either target.
+- **Deduplicated code**: API calls, storage access, mode helpers, DOM helpers, i18n — all centralized in `src/lib/`.
 
 ---
 
@@ -183,18 +256,9 @@ The build runs `node --check` on all `.js` files before packaging.
 | "API Error 401" | Invalid or expired API key |
 | "API Error 404" | Wrong API URL (check `/v1/chat/completions`) |
 | "Network Error" | No connection or local API not running |
-| Context menu doesn't appear | Reload the page, check extension in `about:addons` |
+| Context menu doesn't appear | Reload the page, check extension in `about:addons` / `chrome://extensions` |
 | LU indicator doesn't appear | Verify content script is injected (F12 console) |
 | Translated text not sent | App may use internal state; report the site |
-
----
-
-## Compatibility
-
-- **Browser**: Firefox 57+ (WebExtensions API)
-- **APIs**: Any OpenAI-compatible API (`/v1/chat/completions`)
-- **Storage**: All local in Firefox
-- **Privacy**: Only sends data to your configured API
 
 ---
 
