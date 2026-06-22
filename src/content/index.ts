@@ -375,37 +375,51 @@ function getFieldValue(el: HTMLElement): string {
 function setFieldValue(el: HTMLElement, text: string): void {
   el.focus();
   if (el.isContentEditable) {
-    // Slate.js (Discord), Draft.js, etc. — simulate keyboard
-    el.dispatchEvent(
-      new KeyboardEvent("keydown", {
-        key: "a",
-        code: "KeyA",
-        ctrlKey: true,
-        bubbles: true,
-      })
-    );
+    // contentEditable: select all children, then replace with new text.
+    // The previous implementation dispatched a fake Ctrl+A keydown which
+    // doesn't actually select anything, causing text to be appended.
+    const selection = window.getSelection();
+    if (selection) {
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
     document.execCommand("insertText", false, text);
+    // After execCommand, place cursor at the end so the user keeps typing.
     setTimeout(() => {
       el.focus();
-      const r = document.createRange();
-      r.selectNodeContents(el);
-      r.collapse(false);
-      const s = window.getSelection();
-      s?.removeAllRanges();
-      s?.addRange(r);
+      const selection2 = window.getSelection();
+      if (selection2) {
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        range.collapse(false);
+        selection2.removeAllRanges();
+        selection2.addRange(range);
+      }
     }, 0);
+    el.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertReplacementText", data: text }));
     el.dispatchEvent(new Event("change", { bubbles: true }));
   } else {
     const input = el as HTMLInputElement;
-    input.select();
-    document.execCommand("insertText", false, text);
-    if (input.value !== text) {
+    // setRangeText is the modern, reliable way to replace field content.
+    // Falls back to direct assignment for inputs that don't support it
+    // (e.g. type=email/number with selectionStart === null).
+    try {
+      input.setRangeText(text, 0, input.value.length, "end");
+    } catch {
       input.value = text;
+      try {
+        const end = text.length;
+        input.setSelectionRange(end, end);
+      } catch {
+        // some input types don't support setSelectionRange
+      }
     }
     input.dispatchEvent(
       new InputEvent("input", {
         bubbles: true,
-        inputType: "insertText",
+        inputType: "insertReplacementText",
         data: text,
       })
     );
@@ -663,13 +677,6 @@ async function triggerTranslate(el: HTMLElement): Promise<void> {
     if (resp && resp.ok && resp.content) {
       twLastTranslatedText = resp.content;
       setFieldValue(el, resp.content);
-      const input = el as HTMLInputElement;
-      const end = input.value ? input.value.length : resp.content.length;
-      try {
-        input.setSelectionRange(end, end);
-      } catch {
-        // contentEditable doesn't support setSelectionRange
-      }
     }
   } catch (err) {
     // eslint-disable-next-line no-console
