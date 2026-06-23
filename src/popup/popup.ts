@@ -1,7 +1,10 @@
 // ============================================
-// Lang Utils - Popup script
-// Persistent window with favorites + all modes.
+//  Lang Utils - Popup script
+//  Persistent window with favorites + all modes.
 // ============================================
+
+/** Delay (ms) before closing the popup after it loses focus. */
+const POPUP_BLUR_CLOSE_DELAY_MS = 150;
 
 import browser from "../lib/browser-compat";
 import { i18n, msg } from "../lib/i18n";
@@ -21,6 +24,13 @@ async function popupMain(): Promise<void> {
   await checkAPIStatus();
   await loadModes();
   setupButtons();
+
+  // Close popup window when it loses focus (browser action behavior)
+  window.addEventListener("blur", () => {
+    setTimeout(() => {
+      window.close();
+    }, POPUP_BLUR_CLOSE_DELAY_MS);
+  });
 }
 
 async function checkAPIStatus(): Promise<void> {
@@ -151,7 +161,8 @@ function setupButtons(): void {
     }
     void browser.windows.create({
       url:
-        "chatbot/chatbot.html?text=" +
+        browser.runtime.getURL("chatbot/chatbot.html") +
+        "?text=" +
         encodeURIComponent(selectedText) +
         "&tabId=" +
         tabs[0].id,
