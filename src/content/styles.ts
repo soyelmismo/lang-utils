@@ -190,9 +190,52 @@ export const CONTENT_STYLES = `
 .lu-tb-group-menu .lu-tb-sub:hover { background: var(--lu-border-strong, #0f3460); }
 
 /* Language sub-menu: JS hover (see content/index.ts), current lang highlight */
+.lu-tb-lang-menu {
+  position: fixed;
+  z-index: 2147483647;
+}
 .lu-tb-lang-menu .lu-tb-sub { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .lu-tb-lang-menu .lu-tb-sub-current { color: var(--lu-accent, #e94560); font-weight: 600; }
 .lu-tb-lang-menu .lu-tb-check { color: var(--lu-accent, #e94560); font-weight: 700; }
+.lu-tb-lang-btn {
+  cursor: pointer;
+  position: relative;
+  padding-right: 22px;
+}
+.lu-tb-lang-btn .lu-tb-arrow {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 10px;
+  opacity: .7;
+  pointer-events: none;
+}
+.lu-tb-lang-btn:hover .lu-tb-arrow,
+.lu-tb-lang-btn:focus .lu-tb-arrow { opacity: 1; }
+
+/* Loading state for language menu items */
+.lu-sub-loading {
+  pointer-events: none;
+  opacity: .85;
+  position: relative;
+}
+.lu-sub-loading::after {
+  content: "";
+  position: absolute;
+  right: 28px;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  margin-top: -6px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: luSpin .7s linear infinite;
+}
+@keyframes luSpin {
+  to { transform: rotate(360deg); }
+}
 
 /* ---- Form injection ---- */
 #lu-form-btn {

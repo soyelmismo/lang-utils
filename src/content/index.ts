@@ -387,7 +387,12 @@ function sendModeToAPI(
 ): void {
   if (btn) {
     btn.disabled = true;
-    btn.textContent = "...";
+    if (btn.dataset.code) {
+      btn.classList.add("lu-sub-loading");
+      btn.setAttribute("aria-busy", "true");
+    } else {
+      btn.textContent = "...";
+    }
   }
   browser.runtime
     .sendMessage({
@@ -495,12 +500,14 @@ function showToolbar(x: number, y: number, selectedText: string): void {
     langWrapper.className = "lu-tb-group lu-tb-lang";
 
     const langBtn = document.createElement("button");
-    langBtn.className = "lu-tb-btn lu-tb-fav";
+    langBtn.className = "lu-tb-btn lu-tb-fav lu-tb-lang-btn";
+    langBtn.setAttribute("aria-haspopup", "true");
+    langBtn.setAttribute("aria-expanded", "false");
     const targetCode = currentSettings.favoriteTargetLang || "es";
     const flag = langFlag(targetCode);
     langBtn.innerHTML =
       escapeHtml(flag + " " + renderModeName(translateMode)) +
-      '<span class="lu-tb-arrow">\u25BC</span>';
+      '<span class="lu-tb-arrow" aria-hidden="true">\u25BC</span>';
 
     const langMenu = document.createElement("div");
     langMenu.className = "lu-tb-group-menu lu-tb-lang-menu";
