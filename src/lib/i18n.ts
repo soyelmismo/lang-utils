@@ -340,7 +340,7 @@ export function langOptions(): Array<{ code: string; name: string }> {
 export function translatePage(): void {
   const setAttr = (
     selector: string,
-    attr: "textContent" | "title" | "placeholder" | "innerHTML"
+    attr: "textContent" | "title" | "placeholder"
   ) => {
     document.querySelectorAll(selector).forEach((el) => {
       const key = el.getAttribute(selector.slice(1, -1)) as MessageKey | null;
@@ -355,7 +355,6 @@ export function translatePage(): void {
   setAttr("[data-i18n]", "textContent");
   setAttr("[data-i18n-title]", "title");
   setAttr("[data-i18n-placeholder]", "placeholder");
-  setAttr("[data-i18n-html]", "innerHTML");
 }
 
 /** Get the current locale code. */

@@ -6,7 +6,7 @@
 
 import browser from "../lib/browser-compat";
 import { i18n, msg } from "../lib/i18n";
-import { escapeHtml, markdownToHtml, copyWithFeedback } from "../lib/utils";
+import { markdownToHtml, copyWithFeedback } from "../lib/utils";
 import { loadAndApplyTheme } from "../lib/themes";
 import { $div, $btn, $textarea } from "../lib/dom";
 import type { ChatMessage, ContentMessage } from "../types";
@@ -16,6 +16,7 @@ const selectedText = decodeURIComponent(params.get("text") || "");
 
 /** Max height in px that the chat input textarea auto-grows to. */
 const CHAT_INPUT_MAX_HEIGHT_PX = 120;
+const TYPING_INDICATOR_DOT_COUNT = 3;
 
 const contextText = $div("context-text");
 const messagesContainer = $div("messages");
@@ -129,8 +130,13 @@ function addMessage(type: MessageType, content: string): void {
 
   const contentDiv = document.createElement("div");
   contentDiv.className = "message-content";
-  contentDiv.innerHTML =
-    type === "ai" ? markdownToHtml(content) : escapeHtml(content);
+  if (type === "ai") {
+    // Render trusted markdown from our own AI response. If the response ever
+    // could include user-influenced HTML, switch to DOMPurify.
+    contentDiv.insertAdjacentHTML("beforeend", markdownToHtml(content));
+  } else {
+    contentDiv.textContent = content;
+  }
   div.appendChild(contentDiv);
 
   if (type === "ai") {
@@ -154,8 +160,18 @@ function addLoading(): void {
   if (!messagesContainer) return;
   loadingEl = document.createElement("div");
   loadingEl.className = "message ai-message loading-message";
-  loadingEl.innerHTML =
-    '<div class="message-content"><div class="typing-indicator"><span></span><span></span><span></span></div></div>';
+
+  const contentDiv = document.createElement("div");
+  contentDiv.className = "message-content";
+  const indicator = document.createElement("div");
+  indicator.className = "typing-indicator";
+  for (let i = 0; i < TYPING_INDICATOR_DOT_COUNT; i++) {
+    const dot = document.createElement("span");
+    indicator.appendChild(dot);
+  }
+  contentDiv.appendChild(indicator);
+  loadingEl.appendChild(contentDiv);
+
   messagesContainer.appendChild(loadingEl);
   scrollToBottom();
 }

@@ -6,7 +6,6 @@
 
 import browser from "../lib/browser-compat";
 import { i18n, msg, nativeLangName, langCodes } from "../lib/i18n";
-import { escapeHtml } from "../lib/utils";
 import {
   loadAndApplyTheme,
   PRESET_THEMES,
@@ -115,7 +114,7 @@ async function loadSettings(): Promise<void> {
     "favorite-target-lang"
   ) as HTMLSelectElement | null;
   if (favSel) {
-    favSel.innerHTML = "";
+    favSel.replaceChildren();
     for (const code of langCodes()) {
       const opt = document.createElement("option");
       opt.value = code;
@@ -361,13 +360,15 @@ function setupPresets(): void {
 function renderModesList(): void {
   const container = $div("modes-list");
   if (!container) return;
-  container.innerHTML = "";
+  container.replaceChildren();
 
   if (currentModes.length === 0) {
-    container.innerHTML =
-      '<p style="color:var(--lu-text-muted);text-align:center;padding:20px;">' +
-      msg("no_modes") +
-      "</p>";
+    const empty = document.createElement("p");
+    empty.style.color = "var(--lu-text-muted)";
+    empty.style.textAlign = "center";
+    empty.style.padding = "20px";
+    empty.textContent = msg("no_modes");
+    container.appendChild(empty);
     return;
   }
 
@@ -389,88 +390,116 @@ function renderGroupCard(container: HTMLElement, group: ModeGroup): void {
   const card = document.createElement("div");
   card.className = "mode-card mode-card-group";
 
-  const subCount = (group.subModes || []).length;
-  let subListHTML = "";
-  for (const sub of group.subModes || []) {
-    subListHTML +=
-      '<div class="sub-mode-card">' +
-      '<div class="sub-mode-header">' +
-      '<span class="sub-mode-name">\u2514\u2500 ' +
-      escapeHtml(sub.name) +
-      "</span>" +
-      '<div class="sub-mode-actions">' +
-      '<button class="sub-edit-btn" data-group="' +
-      group.id +
-      '" data-sub="' +
-      sub.id +
-      '" title="' +
-      msg("modal_edit_mode") +
-      '">\u270F\uFE0F</button>' +
-      '<button class="sub-delete-btn" data-group="' +
-      group.id +
-      '" data-sub="' +
-      sub.id +
-      '" title="' +
-      msg("confirm_delete") +
-      '">\uD83D\uDDD1\uFE0F</button>' +
-      "</div>" +
-      "</div>" +
-      '<div class="sub-mode-prompt">' +
-      escapeHtml((sub.prompt || "").substring(0, SUB_MODE_PROMPT_PREVIEW_CHARS)) +
-      "...</div>" +
-      (sub.model
-        ? '<span class="mode-badge-model">' + escapeHtml(sub.model) + "</span>"
-        : "") +
-      "</div>";
+  // Header
+  const header = document.createElement("div");
+  header.className = "mode-card-header";
+
+  const nameSpan = document.createElement("span");
+  nameSpan.className = "mode-card-name";
+  nameSpan.textContent = "\uD83D\uDCC1 " + group.name + " ";
+  const countSpan = document.createElement("span");
+  countSpan.className = "mode-count";
+  countSpan.textContent =
+    "(" + (group.subModes || []).length + " " + msg("sub_modes_count") + ")";
+  nameSpan.appendChild(countSpan);
+  header.appendChild(nameSpan);
+
+  const actions = document.createElement("div");
+  actions.className = "mode-card-actions";
+
+  const favBtn = document.createElement("button");
+  favBtn.className = "mode-fav-btn" + (group.favorite ? " mode-fav-active" : "");
+  favBtn.dataset.id = group.id;
+  favBtn.title = group.favorite ? msg("confirm_delete") : msg("popup_favorites");
+  favBtn.textContent = group.favorite ? "\u2B50" : "\u2606";
+  actions.appendChild(favBtn);
+
+  const addSubBtn = document.createElement("button");
+  addSubBtn.className = "add-sub-btn";
+  addSubBtn.dataset.group = group.id;
+  addSubBtn.title = msg("options_add_mode");
+  addSubBtn.textContent = "+ Sub";
+  actions.appendChild(addSubBtn);
+
+  const editBtn = document.createElement("button");
+  editBtn.className = "mode-edit-btn";
+  editBtn.dataset.id = group.id;
+  editBtn.title = msg("modal_edit_mode");
+  editBtn.textContent = "\u270F\uFE0F";
+  actions.appendChild(editBtn);
+
+  // Group deletion handled in click handler (groups don't have isDefault).
+  const delBtn = document.createElement("button");
+  delBtn.className = "mode-delete-btn";
+  delBtn.dataset.id = group.id;
+  delBtn.title = msg("confirm_delete");
+  delBtn.textContent = "\uD83D\uDDD1\uFE0F";
+  actions.appendChild(delBtn);
+
+  header.appendChild(actions);
+  card.appendChild(header);
+
+  if (group.model) {
+    const modelBadge = document.createElement("span");
+    modelBadge.className = "mode-badge-model";
+    modelBadge.textContent = msg("options_model") + ": " + group.model;
+    card.appendChild(modelBadge);
   }
 
-  card.innerHTML =
-    '<div class="mode-card-header">' +
-    '<span class="mode-card-name">\uD83D\uDCC1 ' +
-    escapeHtml(group.name) +
-    ' <span class="mode-count">(' +
-    subCount +
-    " " +
-    msg("sub_modes_count") +
-    ")</span></span>" +
-    '<div class="mode-card-actions">' +
-    '<button class="mode-fav-btn' +
-    (group.favorite ? " mode-fav-active" : "") +
-    '" data-id="' +
-    group.id +
-    '" title="' +
-    (group.favorite ? msg("confirm_delete") : msg("popup_favorites")) +
-    '">' +
-    (group.favorite ? "\u2B50" : "\u2606") +
-    "</button>" +
-    '<button class="add-sub-btn" data-group="' +
-    group.id +
-    '" title="' +
-    msg("options_add_mode") +
-    '">+ Sub</button>' +
-    '<button class="mode-edit-btn" data-id="' +
-    group.id +
-    '" title="' +
-    msg("modal_edit_mode") +
-    '">\u270F\uFE0F</button>' +
-    '<button class="mode-delete-btn" data-id="' +
-    group.id +
-    '" title="' +
-    msg("confirm_delete") +
-    '">\uD83D\uDDD1\uFE0F</button>' +
-    "</div>" +
-    "</div>" +
-    (group.model
-      ? '<span class="mode-badge-model">' +
-        msg("options_model") +
-        ": " +
-        escapeHtml(group.model) +
-        "</span>"
-      : "") +
-    '<div class="sub-modes-list">' +
-    subListHTML +
-    "</div>";
+  const subList = document.createElement("div");
+  subList.className = "sub-modes-list";
 
+  for (const sub of group.subModes || []) {
+    const subCard = document.createElement("div");
+    subCard.className = "sub-mode-card";
+
+    const subHeader = document.createElement("div");
+    subHeader.className = "sub-mode-header";
+
+    const subName = document.createElement("span");
+    subName.className = "sub-mode-name";
+    subName.textContent = "\u2514\u2500 " + sub.name;
+    subHeader.appendChild(subName);
+
+    const subActions = document.createElement("div");
+    subActions.className = "sub-mode-actions";
+
+    const subEdit = document.createElement("button");
+    subEdit.className = "sub-edit-btn";
+    subEdit.dataset.group = group.id;
+    subEdit.dataset.sub = sub.id;
+    subEdit.title = msg("modal_edit_mode");
+    subEdit.textContent = "\u270F\uFE0F";
+    subActions.appendChild(subEdit);
+
+    const subDel = document.createElement("button");
+    subDel.className = "sub-delete-btn";
+    subDel.dataset.group = group.id;
+    subDel.dataset.sub = sub.id;
+    subDel.title = msg("confirm_delete");
+    subDel.textContent = "\uD83D\uDDD1\uFE0F";
+    subActions.appendChild(subDel);
+
+    subHeader.appendChild(subActions);
+    subCard.appendChild(subHeader);
+
+    const subPrompt = document.createElement("div");
+    subPrompt.className = "sub-mode-prompt";
+    subPrompt.textContent =
+      (sub.prompt || "").substring(0, SUB_MODE_PROMPT_PREVIEW_CHARS) + "...";
+    subCard.appendChild(subPrompt);
+
+    if (sub.model) {
+      const subModel = document.createElement("span");
+      subModel.className = "mode-badge-model";
+      subModel.textContent = sub.model;
+      subCard.appendChild(subModel);
+    }
+
+    subList.appendChild(subCard);
+  }
+
+  card.appendChild(subList);
   container.appendChild(card);
 }
 
@@ -489,69 +518,89 @@ function renderModeCard(
   const card = document.createElement("div");
   card.className = "mode-card" + (isTranslated ? " mode-card-translated" : "");
 
-  card.innerHTML =
-    '<div class="mode-card-header">' +
-    '<span class="mode-card-name">' +
-    escapeHtml(mode.name) +
-    "</span>" +
-    '<div class="mode-card-actions">' +
-    '<button class="mode-fav-btn' +
-    (mode.favorite ? " mode-fav-active" : "") +
-    '" data-id="' +
-    mode.id +
-    '" title="' +
-    (mode.favorite ? msg("confirm_delete") : msg("popup_favorites")) +
-    '">' +
-    (mode.favorite ? "\u2B50" : "\u2606") +
-    "</button>" +
-    '<button class="mode-translate-btn" data-id="' +
-    mode.id +
-    '" title="' +
-    msg("options_tw_target_lang") +
-    ": " +
-    langNameStr +
-    '">' +
-    (isTranslating ? "..." : isTranslated ? "\uD83D\uDD04" : "\uD83C\uDF0D") +
-    "</button>" +
-    (isTranslated
-      ? '<button class="mode-undo-btn" data-id="' +
-        mode.id +
-        '" title="' +
-        msg("content_undo") +
-        '">' +
-        msg("content_undo") +
-        "</button>"
-      : "") +
-    '<button class="mode-edit-btn" data-id="' +
-    mode.id +
-    '" title="' +
-    msg("modal_edit_mode") +
-    '">\u270F\uFE0F</button>' +
-    (mode.protected
-      ? ""
-      : '<button class="mode-delete-btn" data-id="' +
-        mode.id +
-        '" title="' +
-        msg("confirm_delete") +
-        '">\uD83D\uDDD1\uFE0F</button>') +
-    "</div>" +
-    "</div>" +
-    '<div class="mode-card-prompt">' +
-    escapeHtml(promptPreview) +
-    "</div>" +
-    '<div class="mode-card-badges">' +
-    (mode.isDefault
-      ? '<span class="mode-badge">' + msg("options_reset_defaults") + "</span>"
-      : "") +
-    (mode.model
-      ? '<span class="mode-badge-model">' + escapeHtml(mode.model) + "</span>"
-      : "") +
-    (isTranslated
-      ? '<span class="mode-badge-translated">' +
-        i18n.langName(mode._translatedTo || "") +
-        "</span>"
-      : "") +
-    "</div>";
+  const header = document.createElement("div");
+  header.className = "mode-card-header";
+
+  const nameSpan = document.createElement("span");
+  nameSpan.className = "mode-card-name";
+  nameSpan.textContent = mode.name;
+  header.appendChild(nameSpan);
+
+  const actions = document.createElement("div");
+  actions.className = "mode-card-actions";
+
+  const favBtn = document.createElement("button");
+  favBtn.className = "mode-fav-btn" + (mode.favorite ? " mode-fav-active" : "");
+  favBtn.dataset.id = mode.id;
+  favBtn.title = mode.favorite ? msg("confirm_delete") : msg("popup_favorites");
+  favBtn.textContent = mode.favorite ? "\u2B50" : "\u2606";
+  actions.appendChild(favBtn);
+
+  const translateBtn = document.createElement("button");
+  translateBtn.className = "mode-translate-btn";
+  translateBtn.dataset.id = mode.id;
+  translateBtn.title = msg("options_tw_target_lang") + ": " + langNameStr;
+  translateBtn.textContent = isTranslating
+    ? "..."
+    : isTranslated
+    ? "\uD83D\uDD04"
+    : "\uD83C\uDF0D";
+  actions.appendChild(translateBtn);
+
+  if (isTranslated) {
+    const undoBtn = document.createElement("button");
+    undoBtn.className = "mode-undo-btn";
+    undoBtn.dataset.id = mode.id;
+    undoBtn.title = msg("content_undo");
+    undoBtn.textContent = msg("content_undo");
+    actions.appendChild(undoBtn);
+  }
+
+  const editBtn = document.createElement("button");
+  editBtn.className = "mode-edit-btn";
+  editBtn.dataset.id = mode.id;
+  editBtn.title = msg("modal_edit_mode");
+  editBtn.textContent = "\u270F\uFE0F";
+  actions.appendChild(editBtn);
+
+  if (!mode.protected) {
+    const delBtn = document.createElement("button");
+    delBtn.className = "mode-delete-btn";
+    delBtn.dataset.id = mode.id;
+    delBtn.title = msg("confirm_delete");
+    delBtn.textContent = "\uD83D\uDDD1\uFE0F";
+    actions.appendChild(delBtn);
+  }
+
+  header.appendChild(actions);
+  card.appendChild(header);
+
+  const promptEl = document.createElement("div");
+  promptEl.className = "mode-card-prompt";
+  promptEl.textContent = promptPreview;
+  card.appendChild(promptEl);
+
+  const badges = document.createElement("div");
+  badges.className = "mode-card-badges";
+  if (mode.isDefault) {
+    const b = document.createElement("span");
+    b.className = "mode-badge";
+    b.textContent = msg("options_reset_defaults");
+    badges.appendChild(b);
+  }
+  if (mode.model) {
+    const b = document.createElement("span");
+    b.className = "mode-badge-model";
+    b.textContent = mode.model;
+    badges.appendChild(b);
+  }
+  if (isTranslated) {
+    const b = document.createElement("span");
+    b.className = "mode-badge-translated";
+    b.textContent = i18n.langName(mode._translatedTo || "");
+    badges.appendChild(b);
+  }
+  card.appendChild(badges);
 
   container.appendChild(card);
 }

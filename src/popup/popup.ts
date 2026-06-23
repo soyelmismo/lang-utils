@@ -8,7 +8,6 @@ const POPUP_BLUR_CLOSE_DELAY_MS = 150;
 
 import browser from "../lib/browser-compat";
 import { i18n, msg } from "../lib/i18n";
-import { escapeHtml } from "../lib/utils";
 import { loadAndApplyTheme } from "../lib/themes";
 import { $, $span, $div, $btn } from "../lib/dom";
 import type { AnyMode, Settings } from "../types";
@@ -71,31 +70,25 @@ async function loadModes(): Promise<void> {
   })) as { modes: AnyMode[] };
   const modes = resp.modes;
 
-  if (!modes || modes.length === 0) {
-    container.innerHTML =
-      '<p style="color:var(--lu-text-muted);text-align:center;">' +
-      msg("popup_no_modes") +
-      "</p>";
+    if (!modes || modes.length === 0) {
+    const empty = document.createElement("p");
+    empty.style.color = "var(--lu-text-muted)";
+    empty.style.textAlign = "center";
+    empty.textContent = msg("popup_no_modes");
+    container.replaceChildren(empty);
     return;
   }
 
   const favs = modes.filter((m) => m.favorite);
-  const nonChatbot = modes.filter((m) => m.type === "single" && m.prompt !== "__CHATBOT__");
+  const nonChatbot = modes.filter(
+    (m) => m.type === "single" && m.prompt !== "__CHATBOT__"
+  );
 
   if (favs.length > 0) {
     favSection.style.display = "block";
-    favContainer.innerHTML = "";
+    favContainer.replaceChildren();
     for (const mode of favs) {
-      const item = document.createElement("div");
-      item.className = "mode-item fav-item";
-      item.innerHTML =
-        '<span class="mode-icon">\u2B50</span>' +
-        '<span class="mode-name">' +
-        escapeHtml(mode.name) +
-        "</span>" +
-        (mode.model
-          ? '<span class="mode-model-badge">' + escapeHtml(mode.model) + "</span>"
-          : "");
+      const item = buildModeItem(mode, true);
       item.addEventListener("click", () => {
         void browser.runtime.openOptionsPage();
       });
@@ -105,25 +98,39 @@ async function loadModes(): Promise<void> {
     favSection.style.display = "none";
   }
 
-  container.innerHTML = "";
+  container.replaceChildren();
   for (const mode of nonChatbot) {
-    const item = document.createElement("div");
-    item.className = "mode-item" + (mode.favorite ? " mode-item-fav" : "");
-    item.innerHTML =
-      '<span class="mode-icon">' +
-      (mode.favorite ? "\u2B50" : "\u26A1") +
-      "</span>" +
-      '<span class="mode-name">' +
-      escapeHtml(mode.name) +
-      "</span>" +
-      (mode.model
-        ? '<span class="mode-model-badge">' + escapeHtml(mode.model) + "</span>"
-        : "");
+    const item = buildModeItem(mode, mode.favorite);
     item.addEventListener("click", () => {
       void browser.runtime.openOptionsPage();
     });
     container.appendChild(item);
   }
+}
+
+/** Build a single mode entry in the popup. */
+function buildModeItem(mode: AnyMode, isFav: boolean): HTMLDivElement {
+  const item = document.createElement("div");
+  item.className = "mode-item" + (isFav ? " mode-item-fav" : "");
+
+  const icon = document.createElement("span");
+  icon.className = "mode-icon";
+  icon.textContent = isFav ? "\u2B50" : "\u26A1";
+  item.appendChild(icon);
+
+  const name = document.createElement("span");
+  name.className = "mode-name";
+  name.textContent = mode.name;
+  item.appendChild(name);
+
+  if (mode.model) {
+    const modelBadge = document.createElement("span");
+    modelBadge.className = "mode-model-badge";
+    modelBadge.textContent = mode.model;
+    item.appendChild(modelBadge);
+  }
+
+  return item;
 }
 
 function setupButtons(): void {

@@ -213,25 +213,27 @@ function createPopup(
   popup.id = "lang-utils-popup";
   popup.dataset.luRoot = "1";
 
-  const header =
-    '<div class="lu-popup-header">' +
-    '<span class="lu-popup-title">' +
-    escapeHtml(title) +
-    "</span>" +
-    "</div>";
+  const headerEl = document.createElement("div");
+  headerEl.className = "lu-popup-header";
+  const titleEl = document.createElement("span");
+  titleEl.className = "lu-popup-title";
+  titleEl.textContent = title;
+  headerEl.appendChild(titleEl);
 
-  const copyBtn = extraOptions.copyText
-    ? '<button class="lu-popup-copy" type="button" title="' +
-      msg("content_copy") +
-      '">\uD83D\uDCCB</button>'
-    : "";
+  const body = document.createElement("div");
+  body.className = "lu-popup-body";
+  body.insertAdjacentHTML("beforeend", bodyHTML);
 
-  popup.innerHTML =
-    header +
-    '<div class="lu-popup-body">' +
-    bodyHTML +
-    "</div>" +
-    copyBtn;
+  popup.appendChild(headerEl);
+  popup.appendChild(body);
+  if (extraOptions.copyText) {
+    const copyBtnEl = document.createElement("button");
+    copyBtnEl.className = "lu-popup-copy";
+    copyBtnEl.type = "button";
+    copyBtnEl.title = msg("content_copy");
+    copyBtnEl.textContent = "\uD83D\uDCCB";
+    popup.appendChild(copyBtnEl);
+  }
   document.body.appendChild(popup);
 
   // Make sure it's rendered with max sizes before we position it.
@@ -297,34 +299,53 @@ function createPanel(
   removePanel();
   const panel = document.createElement("div");
   panel.id = "lang-utils-panel";
-  panel.innerHTML =
-    '<div class="lu-header">' +
-    '<span class="lu-header-title">' +
-    escapeHtml(title) +
-    "</span>" +
-    '<div class="lu-header-actions">' +
-    '<button class="lu-btn" id="lu-copy-btn" title="' +
-    msg("content_copy") +
-    '">\uD83D\uDCCB</button>' +
-    '<button class="lu-btn" id="lu-close-btn" title="' +
-    msg("content_close") +
-    '">\u2715</button>' +
-    "</div>" +
-    "</div>" +
-    '<div class="lu-body" id="lu-body">' +
-    contentHTML +
-    "</div>" +
-    (options.actions || "");
+
+  const headerEl = document.createElement("div");
+  headerEl.className = "lu-header";
+  const titleEl = document.createElement("span");
+  titleEl.className = "lu-header-title";
+  titleEl.textContent = title;
+  headerEl.appendChild(titleEl);
+
+  const actions = document.createElement("div");
+  actions.className = "lu-header-actions";
+
+  const copyBtn = document.createElement("button");
+  copyBtn.className = "lu-btn";
+  copyBtn.id = "lu-copy-btn";
+  copyBtn.title = msg("content_copy");
+  copyBtn.textContent = "\uD83D\uDCCB";
+  actions.appendChild(copyBtn);
+
+  const closeBtnHeader = document.createElement("button");
+  closeBtnHeader.className = "lu-btn";
+  closeBtnHeader.id = "lu-close-btn";
+  closeBtnHeader.title = msg("content_close");
+  closeBtnHeader.textContent = "\u2715";
+  actions.appendChild(closeBtnHeader);
+
+  headerEl.appendChild(actions);
+
+  const body = document.createElement("div");
+  body.className = "lu-body";
+  body.id = "lu-body";
+  body.insertAdjacentHTML("beforeend", contentHTML);
+
+  panel.appendChild(headerEl);
+  panel.appendChild(body);
+  if (options.actions) {
+    panel.insertAdjacentHTML("beforeend", options.actions);
+  }
   document.body.appendChild(panel);
   currentPanel = panel;
 
   const closeBtn = panel.querySelector<HTMLButtonElement>("#lu-close-btn");
   closeBtn?.addEventListener("click", removePanel);
 
-  const copyBtn = panel.querySelector<HTMLButtonElement>("#lu-copy-btn");
-  copyBtn?.addEventListener("click", () => {
+  const copyBtn2 = panel.querySelector<HTMLButtonElement>("#lu-copy-btn");
+  copyBtn2?.addEventListener("click", () => {
     const body = panel.querySelector<HTMLElement>("#lu-body");
-    if (body) copyWithFeedback(body.textContent || "", copyBtn);
+    if (body) copyWithFeedback(body.textContent || "", copyBtn2);
   });
 
   makeDraggable(panel, panel.querySelector<HTMLElement>(".lu-header"));
@@ -505,9 +526,14 @@ function showToolbar(x: number, y: number, selectedText: string): void {
     langBtn.setAttribute("aria-expanded", "false");
     const targetCode = currentSettings.favoriteTargetLang || "es";
     const flag = langFlag(targetCode);
-    langBtn.innerHTML =
-      escapeHtml(flag + " " + renderModeName(translateMode)) +
-      '<span class="lu-tb-arrow" aria-hidden="true">\u25BC</span>';
+    const langLabel = document.createElement("span");
+    langLabel.textContent = flag + " " + renderModeName(translateMode);
+    langBtn.appendChild(langLabel);
+    const langArrow = document.createElement("span");
+    langArrow.className = "lu-tb-arrow";
+    langArrow.setAttribute("aria-hidden", "true");
+    langArrow.textContent = "\u25BC";
+    langBtn.appendChild(langArrow);
 
     const langMenu = document.createElement("div");
     langMenu.className = "lu-tb-group-menu lu-tb-lang-menu";
@@ -517,11 +543,15 @@ function showToolbar(x: number, y: number, selectedText: string): void {
       item.className = "lu-tb-sub";
       item.dataset.code = code;
       if (code === targetCode) item.classList.add("lu-tb-sub-current");
-      item.innerHTML =
-        escapeHtml(langFlag(code) + " " + nativeLangName(code)) +
-        (code === targetCode
-          ? '<span class="lu-tb-check">\u2713</span>'
-          : "");
+      const itemLabel = document.createElement("span");
+      itemLabel.textContent = langFlag(code) + " " + nativeLangName(code);
+      item.appendChild(itemLabel);
+      if (code === targetCode) {
+        const check = document.createElement("span");
+        check.className = "lu-tb-check";
+        check.textContent = "\u2713";
+        item.appendChild(check);
+      }
       item.addEventListener("mousedown", (e: MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
@@ -607,7 +637,13 @@ function showToolbar(x: number, y: number, selectedText: string): void {
 
     const btn = document.createElement("button");
     btn.className = "lu-tb-group-btn";
-    btn.innerHTML = escapeHtml(group.name) + '<span class="lu-tb-arrow">\u25BC</span>';
+    const groupName = document.createElement("span");
+    groupName.textContent = group.name;
+    btn.appendChild(groupName);
+    const groupArrow = document.createElement("span");
+    groupArrow.className = "lu-tb-arrow";
+    groupArrow.textContent = "\u25BC";
+    btn.appendChild(groupArrow);
 
     const menu = document.createElement("div");
     menu.className = "lu-tb-group-menu";
@@ -838,7 +874,12 @@ function showFormButton(el: HTMLElement): void {
   formBtn = document.createElement("button");
   formBtn.id = "lu-form-btn";
   formBtn.title = "Lang Utils — translate this field";
-  formBtn.innerHTML = 'LU<span class="lu-form-arrow" aria-hidden="true">\u25BE</span>';
+  formBtn.textContent = "LU";
+  const formArrow = document.createElement("span");
+  formArrow.className = "lu-form-arrow";
+  formArrow.setAttribute("aria-hidden", "true");
+  formArrow.textContent = "\u25BE";
+  formBtn.appendChild(formArrow);
   formBtn.style.cssText = "position:fixed;z-index:2147483645;";
   document.body.appendChild(formBtn);
 
@@ -902,8 +943,14 @@ function showFormMenu(el: HTMLElement): void {
   for (const group of toolbarGroups) {
     const groupItem = document.createElement("div");
     groupItem.className = "lu-fm-group";
-    groupItem.innerHTML =
-      escapeHtml(group.name) + ' <span class="lu-fm-arrow">\u25B6</span>';
+    const groupName = document.createElement("span");
+    groupName.textContent = group.name;
+    groupItem.appendChild(groupName);
+    groupItem.appendChild(document.createTextNode(" "));
+    const groupArrow = document.createElement("span");
+    groupArrow.className = "lu-fm-arrow";
+    groupArrow.textContent = "\u25B6";
+    groupItem.appendChild(groupArrow);
 
     const subsContainer = document.createElement("div");
     subsContainer.className = "lu-fm-subs";
@@ -943,8 +990,10 @@ function showFormMenu(el: HTMLElement): void {
     // Active: show language picker + stop
     const header = document.createElement("div");
     header.className = "lu-fm-tw-header";
-    header.innerHTML =
-      '<span class="lu-fm-tw-dot"></span> ' + msg("content_tw_active");
+    const twDot = document.createElement("span");
+    twDot.className = "lu-fm-tw-dot";
+    header.appendChild(twDot);
+    header.appendChild(document.createTextNode(" " + msg("content_tw_active")));
     formMenu.appendChild(header);
 
     for (const code of TW_LANGUAGES) {
