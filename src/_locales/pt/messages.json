@@ -3,7 +3,7 @@
     "message": "Lang Utils"
   },
   "extensionDescription": {
-    "message": "Utilidades de idioma com IA: traduzir, resumir, explicar e mais"
+    "message": "⚠️ Requires a LLM API (Ollama, OpenAI, Groq, OpenRouter, etc.) — there is no built-in AI. Lang Utils brings instant AI-powered language tools to every webpage: translate selections, rewrite text, summarize articles, explain code, explain images, check grammar, extract JSON, change tone, and more. Pick from bundled presets or build custom actions with your own prompt — run them inline on any selection, form field, or page with one click."
   },
   "popup_title": {
     "message": "Lang Utils"
