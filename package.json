@@ -9,10 +9,10 @@
     "lint": "eslint src scripts",
     "build": "node scripts/build.mjs",
     "build:watch": "node scripts/build.mjs --watch",
-    "package": "node scripts/package.mjs",
-    "package:chrome": "node scripts/package.mjs --target=chrome",
-    "package:firefox": "node scripts/package.mjs --target=firefox",
-    "package:no-build": "node scripts/package.mjs --no-build"
+    "package": "node scripts/ensure-deps.mjs && node scripts/package.mjs",
+    "package:chrome": "node scripts/ensure-deps.mjs && node scripts/package.mjs --target=chrome",
+    "package:firefox": "node scripts/ensure-deps.mjs && node scripts/package.mjs --target=firefox",
+    "package:no-build": "node scripts/ensure-deps.mjs && node scripts/package.mjs --no-build"
   },
   "keywords": [
     "browser-extension",
