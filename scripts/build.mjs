@@ -63,11 +63,9 @@ async function writeManifest() {
     // Chrome MV3 doesn't support browser_specific_settings
     delete manifest.browser_specific_settings;
   } else if (target === "firefox") {
-    // Firefox requires both service_worker (for 112+) AND scripts (for older versions)
-    // Our strict_min_version is 112, but Firefox validator wants both for compat
+    // Firefox MV3 with strict_min_version >= 142: use scripts only (event page)
+    // The validator flags service_worker as unsupported on Firefox.
     manifest.background = {
-      service_worker: "background.js",
-      type: "module",
       scripts: ["background.js"],
     };
     // Keep browser_specific_settings for Firefox
