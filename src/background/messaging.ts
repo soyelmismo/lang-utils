@@ -62,8 +62,11 @@ const API_TEST_ECHO_CHARS = 60;
 // ============================================
 
 /** Initialize background: load modes + settings, build context menus. */
+let initPromise: Promise<void> | null = null;
 export async function init(): Promise<void> {
-  log("Starting init...");
+  if (initPromise) return initPromise;
+  initPromise = (async () => {
+    log("Starting init...");
   await i18n.init();
 
   const storedModes = await storage.getModes();
@@ -102,6 +105,8 @@ export async function init(): Promise<void> {
 
   buildContextMenus();
   log("Init complete. API key present:", !!settings.apiKey);
+  })();
+  return initPromise;
 }
 
 // ============================================
@@ -628,6 +633,7 @@ export async function onMessage(
   message: BackgroundMessage,
   sender: browser.Runtime.MessageSender
 ): Promise<unknown> {
+  if (initPromise) await initPromise;
   switch (message.type) {
     case "ping":
       return { pong: true };
