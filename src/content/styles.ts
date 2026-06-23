@@ -189,8 +189,7 @@ export const CONTENT_STYLES = `
 }
 .lu-tb-group-menu .lu-tb-sub:hover { background: var(--lu-border-strong, #0f3460); }
 
-/* Language sub-menu: open on hover of parent button, current lang highlight */
-.lu-tb-lang:hover .lu-tb-lang-menu { display: block; }
+/* Language sub-menu: JS hover (see content/index.ts), current lang highlight */
 .lu-tb-lang-menu .lu-tb-sub { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .lu-tb-lang-menu .lu-tb-sub-current { color: var(--lu-accent, #e94560); font-weight: 600; }
 .lu-tb-lang-menu .lu-tb-check { color: var(--lu-accent, #e94560); font-weight: 700; }

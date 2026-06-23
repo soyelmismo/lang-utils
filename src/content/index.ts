@@ -441,6 +441,36 @@ function sendModeToAPI(
     });
 }
 
+/** Position a dropdown menu below a trigger button, keeping it within viewport. */
+function positionMenu(trigger: HTMLElement, menu: HTMLElement): void {
+  const triggerRect = trigger.getBoundingClientRect();
+  const menuRect = menu.getBoundingClientRect();
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const GAP = 4;
+
+  // Preferred: below the trigger
+  let top = triggerRect.bottom + GAP;
+  let left = triggerRect.left;
+
+  // Flip vertically if would go off bottom
+  if (top + menuRect.height > vh) {
+    top = triggerRect.top - menuRect.height - GAP;
+  }
+
+  // Flip horizontally if would go off right
+  if (left + menuRect.width > vw) {
+    left = triggerRect.right - menuRect.width;
+  }
+
+  // Clamp
+  top = Math.max(GAP, Math.min(top, vh - menuRect.height - GAP));
+  left = Math.max(GAP, Math.min(left, vw - menuRect.width - GAP));
+
+  menu.style.top = top + "px";
+  menu.style.left = left + "px";
+}
+
 /** Resolve {{targetLang}} placeholder in a mode name using the user's favorite target language. */
 function renderModeName(mode: Mode): string {
   const target = currentSettings.favoriteTargetLang || "es";
@@ -495,13 +525,8 @@ function showToolbar(x: number, y: number, selectedText: string): void {
             settings: { favoriteTargetLang: code },
           });
         }
-        sendModeToAPI(
-          translateMode.id,
-          "",
-          selectedText,
-          null,
-          currentSettings.autoSetFavorite ? code : targetCode
-        );
+        // Always translate to the selected language (code), not the old favorite
+        sendModeToAPI(translateMode.id, "", selectedText, item, code);
       });
       langMenu.appendChild(item);
     }
@@ -513,8 +538,38 @@ function showToolbar(x: number, y: number, selectedText: string): void {
       document
         .querySelectorAll<HTMLDivElement>(".lu-tb-group-menu.lu-show")
         .forEach((m) => m.classList.remove("lu-show"));
-      if (!wasOpen) langMenu.classList.add("lu-show");
+      if (!wasOpen) {
+        positionMenu(langBtn, langMenu);
+        langMenu.classList.add("lu-show");
+      }
     });
+
+    // JS hover with delay & gap tolerance (replaces CSS :hover)
+    let hoverTimer: number;
+    const HOVER_OPEN_DELAY = 120;
+    const HOVER_CLOSE_DELAY = 200;
+
+    function openMenu() {
+      clearTimeout(hoverTimer);
+      hoverTimer = window.setTimeout(() => {
+        document
+          .querySelectorAll<HTMLDivElement>(".lu-tb-group-menu.lu-show")
+          .forEach((m) => m.classList.remove("lu-show"));
+        positionMenu(langBtn, langMenu);
+        langMenu.classList.add("lu-show");
+      }, HOVER_OPEN_DELAY);
+    }
+    function closeMenu() {
+      clearTimeout(hoverTimer);
+      hoverTimer = window.setTimeout(() => {
+        langMenu.classList.remove("lu-show");
+      }, HOVER_CLOSE_DELAY);
+    }
+
+    langBtn.addEventListener("mouseenter", openMenu);
+    langBtn.addEventListener("mouseleave", closeMenu);
+    langMenu.addEventListener("mouseenter", openMenu);
+    langMenu.addEventListener("mouseleave", closeMenu);
 
     langWrapper.appendChild(langBtn);
     langWrapper.appendChild(langMenu);
