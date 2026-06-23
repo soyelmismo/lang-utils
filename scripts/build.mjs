@@ -63,8 +63,11 @@ async function writeManifest() {
     // Chrome MV3 doesn't support browser_specific_settings
     delete manifest.browser_specific_settings;
   } else if (target === "firefox") {
-    // Firefox MV3 supports background.scripts (event page)
-    manifest.background = { scripts: ["background.js"], type: "module" };
+    // Firefox 112+ supports service_worker with type: module (our strict_min_version)
+    manifest.background = {
+      service_worker: "background.js",
+      type: "module",
+    };
     // Keep browser_specific_settings for Firefox
   } else {
     // Cross-browser default: service_worker (Chrome) + scripts (Firefox)
