@@ -119,6 +119,12 @@
   "options_tw_debounce_hint": {
     "message": "Temps d'attente après avoir arrêté de taper (500-5000ms)"
   },
+  "options_result_popup": {
+    "message": "Popup de résultat"
+  },
+  "options_result_popup_hint": {
+    "message": "Affiche les résultats dans une petite popup près du texte sélectionné qui se ferme au clic extérieur ou au changement de focus."
+  },
   "mode_name": {
     "message": "Nom du mode"
   },
@@ -254,12 +260,6 @@
   "content_copy_all": {
     "message": "Tout copier"
   },
-  "content_confirm_yes": {
-    "message": "Oui, traiter"
-  },
-  "content_confirm_no": {
-    "message": "Annuler"
-  },
   "content_undo": {
     "message": "Annuler"
   },
@@ -304,15 +304,6 @@
   },
   "bg_api_not_configured": {
     "message": "Aucune clé API configurée. Allez dans les paramètres de l'extension."
-  },
-  "bg_lang_detection_failed": {
-    "message": "Échec de la détection de la langue"
-  },
-  "bg_same_lang_confirm": {
-    "message": "Le texte est déjà en "
-  },
-  "bg_same_lang_confirm_suffix": {
-    "message": ". Traiter quand même ?"
   },
   "lang_es": {
     "message": "Español"

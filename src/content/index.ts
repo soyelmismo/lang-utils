@@ -10,7 +10,7 @@ import { i18n, msg } from "../lib/i18n";
 import { escapeHtml, markdownToHtml, copyWithFeedback } from "../lib/utils";
 import { loadAndApplyTheme } from "../lib/themes";
 import { CONTENT_STYLES } from "./styles";
-import type { AnyMode, ModeGroup } from "../types";
+import type { AnyMode, ModeGroup, Settings } from "../types";
 
 // ---- Guard against double-injection ----
 declare global {
@@ -64,11 +64,41 @@ const FORM_MENU_ITEM_HEIGHT_PX = 28;
 /** Extra vertical padding (px) inside the form-mode menu. */
 const FORM_MENU_VERTICAL_PADDING_PX = 16;
 
+// ============================================
+// Result popup tunables (when Settings.resultPopup is true)
+// ============================================
+
+/** Max width (px) of the result popup. */
+const POPUP_MAX_WIDTH_PX = 380;
+/** Max height (px) of the result popup. Content scrolls if it exceeds this. */
+const POPUP_MAX_HEIGHT_PX = 320;
+/** Min width (px) of the result popup (so short messages don't look like a chip). */
+const POPUP_MIN_WIDTH_PX = 200;
+/** Offset (px) from the selection rectangle to the popup edge. */
+const POPUP_OFFSET_PX = 12;
+/** Safety margin (px) between the popup and the viewport edges, same convention as the form UI. */
+const POPUP_VIEWPORT_MARGIN_PX = VIEWPORT_EDGE_MARGIN_PX;
+
+/** Default (px) top/left offset used when the popup is shown without a selection anchor. */
+const POPUP_FALLBACK_OFFSET_PX = 20;
+
 /** Main entry point for the content script. */
 async function contentMain(): Promise<void> {
   // Apply the user's theme to this page's :root so injected UI matches.
   await loadAndApplyTheme();
   await i18n.init();
+
+  // Load current settings (so we can honor resultPopup preference, etc.)
+  try {
+    const resp = (await browser.runtime.sendMessage({
+      type: "get-settings",
+    })) as { settings?: Partial<Settings> };
+    if (resp && resp.settings) {
+      currentSettings = { ...currentSettings, ...resp.settings };
+    }
+  } catch {
+    // No background yet; keep defaults.
+  }
 
   // Inject styles
   const style = document.createElement("style");
@@ -88,7 +118,18 @@ async function contentMain(): Promise<void> {
 //  PANEL MANAGEMENT
 // ============================================================
 
+/** Local copy of the user's settings, loaded once at content script init. */
+let currentSettings: Settings = {
+  apiUrl: "https://api.openai.com/v1",
+  apiKey: "",
+  model: "gpt-4o-mini",
+  temperature: 0.7,
+  language: "es",
+  resultPopup: true,
+};
+
 let currentPanel: HTMLDivElement | null = null;
+let currentPopup: HTMLDivElement | null = null;
 
 /** Remove the current result panel if any. */
 function removePanel(): void {
@@ -96,6 +137,161 @@ function removePanel(): void {
     currentPanel.remove();
     currentPanel = null;
   }
+}
+
+// ============================================
+//  RESULT POPUP (when Settings.resultPopup is true)
+// ============================================
+
+/** Active listeners for auto-dismissing the current popup; cleared on close. */
+let popupDismissHandlers: {
+  blur: () => void;
+  pointer: (e: PointerEvent) => void;
+  key: (e: KeyboardEvent) => void;
+} | null = null;
+
+/** Close + tear down the result popup, removing all dismiss listeners. */
+function closePopup(): void {
+  if (currentPopup) {
+    currentPopup.remove();
+    currentPopup = null;
+  }
+  if (popupDismissHandlers) {
+    window.removeEventListener("blur", popupDismissHandlers.blur);
+    document.removeEventListener("pointerdown", popupDismissHandlers.pointer);
+    document.removeEventListener("keydown", popupDismissHandlers.key);
+    popupDismissHandlers = null;
+  }
+}
+
+/** Position `popup` next to the given selection bounding rect, staying in the viewport. */
+function positionPopupNearSelection(
+  popup: HTMLDivElement,
+  rect: DOMRect
+): void {
+  const margin = POPUP_VIEWPORT_MARGIN_PX;
+  const offset = POPUP_OFFSET_PX;
+  const popupWidth = popup.offsetWidth;
+  const popupHeight = popup.offsetHeight;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+
+  // Prefer below the selection; flip up if there's not enough room.
+  let top = rect.bottom + window.scrollY + offset;
+  if (top + popupHeight > window.scrollY + vh - margin) {
+    top = rect.top + window.scrollY - popupHeight - offset;
+  }
+  // Nudge up if even the flipped position is off-screen.
+  if (top < window.scrollY + margin) top = window.scrollY + margin;
+
+  // Center horizontally on the selection, clamped to viewport.
+  let left =
+    rect.left + window.scrollX + (rect.width - popupWidth) / 2;
+  if (left + popupWidth > window.scrollX + vw - margin) {
+    left = window.scrollX + vw - popupWidth - margin;
+  }
+  if (left < window.scrollX + margin) left = window.scrollX + margin;
+
+  popup.style.position = "absolute";
+  popup.style.top = top + "px";
+  popup.style.left = left + "px";
+}
+
+/** Get the bounding rect of the current selection, or null if empty/collapsed. */
+function getSelectionRect(): DOMRect | null {
+  const sel = window.getSelection();
+  if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return null;
+  const range = sel.getRangeAt(0);
+  const rect = range.getBoundingClientRect();
+  if (rect.width === 0 && rect.height === 0) return null;
+  return rect;
+}
+
+/** Open a transient result popup anchored at the current selection. */
+function createPopup(
+  title: string,
+  bodyHTML: string,
+  extraOptions: { copyText?: string } = {}
+): HTMLDivElement {
+  closePopup();
+
+  const popup = document.createElement("div");
+  popup.id = "lang-utils-popup";
+  popup.dataset.luRoot = "1";
+
+  const header =
+    '<div class="lu-popup-header">' +
+    '<span class="lu-popup-title">' +
+    escapeHtml(title) +
+    "</span>" +
+    "</div>";
+
+  const copyBtn = extraOptions.copyText
+    ? '<button class="lu-popup-copy" type="button" title="' +
+      msg("content_copy") +
+      '">\uD83D\uDCCB</button>'
+    : "";
+
+  popup.innerHTML =
+    header +
+    '<div class="lu-popup-body">' +
+    bodyHTML +
+    "</div>" +
+    copyBtn;
+  document.body.appendChild(popup);
+
+  // Make sure it's rendered with max sizes before we position it.
+  popup.style.maxWidth = POPUP_MAX_WIDTH_PX + "px";
+  popup.style.maxHeight = POPUP_MAX_HEIGHT_PX + "px";
+  popup.style.minWidth = POPUP_MIN_WIDTH_PX + "px";
+
+  // Wire the copy button if present.
+  if (extraOptions.copyText) {
+    const btn = popup.querySelector<HTMLButtonElement>(".lu-popup-copy");
+    btn?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      copyWithFeedback(
+        extraOptions.copyText || "",
+        btn,
+        msg("content_copy")
+      );
+    });
+  }
+
+  // Position next to the selection, otherwise default to top-left with a fallback.
+  const rect = getSelectionRect();
+  if (rect) {
+    positionPopupNearSelection(popup, rect);
+  } else {
+    popup.style.top = window.scrollY + POPUP_FALLBACK_OFFSET_PX + "px";
+    popup.style.left = window.scrollX + POPUP_FALLBACK_OFFSET_PX + "px";
+  }
+
+  // Auto-dismiss handlers.
+  const onBlur = () => closePopup();
+  const onPointer = (e: PointerEvent) => {
+    const target = e.target as Node | null;
+    if (target && popup.contains(target)) return;
+    closePopup();
+  };
+  const onKey = (e: KeyboardEvent) => {
+    if (e.key === "Escape") {
+      e.stopPropagation();
+      closePopup();
+    }
+  };
+
+  window.addEventListener("blur", onBlur);
+  document.addEventListener("pointerdown", onPointer);
+  document.addEventListener("keydown", onKey);
+  popupDismissHandlers = {
+    blur: onBlur,
+    pointer: onPointer,
+    key: onKey,
+  };
+
+  currentPopup = popup;
+  return popup;
 }
 
 /** Create the result panel with title + content. */
@@ -209,22 +405,43 @@ function sendModeToAPI(
       const r = resp as { ok?: boolean; content?: string; error?: string };
       removeToolbar();
       if (r && r.ok && r.content) {
-        createPanel(msg("content_result"), markdownToHtml(r.content));
+        if (currentSettings.resultPopup) {
+          createPopup(msg("content_result"), markdownToHtml(r.content), {
+            copyText: r.content,
+          });
+        } else {
+          createPanel(msg("content_result"), markdownToHtml(r.content));
+        }
       } else {
-        createPanel(
-          msg("content_error"),
-          '<div class="lu-error">' +
-            escapeHtml(r ? r.error || "Unknown error" : "Unknown error") +
-            "</div>"
+        const errMsg = escapeHtml(
+          r ? r.error || "Unknown error" : "Unknown error"
         );
+        if (currentSettings.resultPopup) {
+          createPopup(
+            msg("content_error"),
+            '<div class="lu-error">' + errMsg + "</div>"
+          );
+        } else {
+          createPanel(
+            msg("content_error"),
+            '<div class="lu-error">' + errMsg + "</div>"
+          );
+        }
       }
     })
     .catch((err: Error) => {
       removeToolbar();
-      createPanel(
-        msg("content_error"),
-        '<div class="lu-error">' + escapeHtml(err.message) + "</div>"
-      );
+      if (currentSettings.resultPopup) {
+        createPopup(
+          msg("content_error"),
+          '<div class="lu-error">' + escapeHtml(err.message) + "</div>"
+        );
+      } else {
+        createPanel(
+          msg("content_error"),
+          '<div class="lu-error">' + escapeHtml(err.message) + "</div>"
+        );
+      }
     });
 }
 
@@ -886,80 +1103,57 @@ function setupMessageHandler(): void {
 
         case "show-loading": {
           const title = String(message.title || "");
-          createPanel(
-            title,
+          const body =
             '<div class="lu-loading"><div class="lu-spinner"></div><span>' +
-              msg("content_processing") +
-              "</span></div>"
-          );
+            msg("content_processing") +
+            "</span></div>";
+          if (currentSettings.resultPopup) {
+            createPopup(title, body);
+          } else {
+            createPanel(title, body);
+          }
           return;
         }
 
         case "show-result": {
           const title = String(message.title || "");
           const content = String(message.content || "");
-          createPanel(title, markdownToHtml(content), {
-            actions:
-              '<div class="lu-actions-bar"><button class="lu-action-btn" id="lu-copy-full">' +
-              msg("content_copy_all") +
-              "</button></div>",
-          });
-          const copyFull = document.getElementById("lu-copy-full");
-          copyFull?.addEventListener("click", () => {
-            copyWithFeedback(
-              content,
-              copyFull as HTMLButtonElement,
-              msg("content_copy_all")
-            );
-          });
+          const html = markdownToHtml(content);
+          if (currentSettings.resultPopup) {
+            createPopup(title, html, { copyText: content });
+          } else {
+            createPanel(title, html, {
+              actions:
+                '<div class="lu-actions-bar"><button class="lu-action-btn" id="lu-copy-full">' +
+                msg("content_copy_all") +
+                "</button></div>",
+            });
+            const copyFull = document.getElementById("lu-copy-full");
+            copyFull?.addEventListener("click", () => {
+              copyWithFeedback(
+                content,
+                copyFull as HTMLButtonElement,
+                msg("content_copy_all")
+              );
+            });
+          }
           return;
         }
 
         case "show-error": {
           const title = String(message.title || "");
           const content = String(message.content || "");
-          createPanel(
-            title,
-            '<div class="lu-error">' + escapeHtml(content) + "</div>"
-          );
-          return;
-        }
-
-        case "show-confirm": {
-          const title = String(message.title || "");
-          const content = String(message.content || "");
-          const originalPrompt = String(message.originalPrompt || "");
-          const modeName = String(message.modeName || "");
-          const model = String(message.model || "");
-          createPanel(
-            title,
-            '<div class="lu-info">' +
-              escapeHtml(content) +
-              "</div>" +
-              '<div class="lu-confirm-btns">' +
-              '<button class="lu-confirm-yes" id="lu-confirm-yes">' +
-              msg("content_confirm_yes") +
-              "</button>" +
-              '<button class="lu-confirm-no" id="lu-confirm-no">' +
-              msg("content_confirm_no") +
-              "</button>" +
-              "</div>"
-          );
-          const yesBtn = document.getElementById("lu-confirm-yes");
-          yesBtn?.addEventListener("click", () => {
-            removePanel();
-            void browser.runtime.sendMessage({
-              type: "confirm-proceed",
-              proceed: true,
-              originalPrompt,
-              modeName,
-              model,
-            });
-          });
-          const noBtn = document.getElementById("lu-confirm-no");
-          noBtn?.addEventListener("click", () => {
-            removePanel();
-          });
+          if (currentSettings.resultPopup) {
+            createPopup(
+              title,
+              '<div class="lu-error">' + escapeHtml(content) + "</div>"
+            );
+          } else {
+            createPanel(
+              title,
+              '<div class="lu-error">' + escapeHtml(content) + "</div>"
+            );
+          }
           return;
         }
 

@@ -119,6 +119,12 @@
   "options_tw_debounce_hint": {
     "message": "Wartezeit, nachdem Sie aufgehört haben zu tippen (500-5000ms)"
   },
+  "options_result_popup": {
+    "message": "Ergebnis-Popup"
+  },
+  "options_result_popup_hint": {
+    "message": "Zeigt Ergebnisse als kleines Popup in der Nähe des ausgewählten Textes, das sich beim Klicken außerhalb oder Fokusverlust schließt."
+  },
   "mode_name": {
     "message": "Modusname"
   },
@@ -254,12 +260,6 @@
   "content_copy_all": {
     "message": "Alle kopieren"
   },
-  "content_confirm_yes": {
-    "message": "Ja, verarbeiten"
-  },
-  "content_confirm_no": {
-    "message": "Abbrechen"
-  },
   "content_undo": {
     "message": "Rückgängig"
   },
@@ -304,15 +304,6 @@
   },
   "bg_api_not_configured": {
     "message": "Kein API-Schlüssel konfiguriert. Gehen Sie zu den Erweiterungseinstellungen."
-  },
-  "bg_lang_detection_failed": {
-    "message": "Spracherkennung fehlgeschlagen"
-  },
-  "bg_same_lang_confirm": {
-    "message": "Der Text ist bereits auf "
-  },
-  "bg_same_lang_confirm_suffix": {
-    "message": ". Trotzdem verarbeiten?"
   },
   "lang_es": {
     "message": "Español"

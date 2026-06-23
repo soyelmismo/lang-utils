@@ -119,6 +119,12 @@
   "options_tw_debounce_hint": {
     "message": "Tempo di attesa dopo aver smesso di digitare (500-5000ms)"
   },
+  "options_result_popup": {
+    "message": "Popup del risultato"
+  },
+  "options_result_popup_hint": {
+    "message": "Mostra i risultati come un piccolo popup vicino al testo selezionato che si chiude al clic esterno o al cambio di focus."
+  },
   "mode_name": {
     "message": "Nome modalità"
   },
@@ -254,12 +260,6 @@
   "content_copy_all": {
     "message": "Copia tutto"
   },
-  "content_confirm_yes": {
-    "message": "Sì, elabora"
-  },
-  "content_confirm_no": {
-    "message": "Annulla"
-  },
   "content_undo": {
     "message": "Annulla"
   },
@@ -304,15 +304,6 @@
   },
   "bg_api_not_configured": {
     "message": "Nessuna chiave API configurata. Vai alle impostazioni dell'estensione."
-  },
-  "bg_lang_detection_failed": {
-    "message": "Rilevamento della lingua non riuscito"
-  },
-  "bg_same_lang_confirm": {
-    "message": "Il testo è già in "
-  },
-  "bg_same_lang_confirm_suffix": {
-    "message": ". Elaborare comunque?"
   },
   "lang_es": {
     "message": "Español"

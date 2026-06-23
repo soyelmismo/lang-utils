@@ -1,11 +1,10 @@
 // ============================================
 // Lang Utils - Mode helpers
-// Pure functions for finding modes, computing
-// effective prompts/models, and language detection.
+// Pure functions for finding modes and computing
+// effective prompts/models for sub-modes.
 // ============================================
 
 import { AnyMode, Mode, ModeGroup, SubMode } from "../types";
-import { LANG_MAP } from "./modes";
 
 /** Result of searching for a mode by id (single or inside a group). */
 export interface ModeLookup {
@@ -47,34 +46,6 @@ export function getEffectiveModel(
     return parentMode.model;
   }
   return "";
-}
-
-/** Is this mode a translation mode? (Heuristic based on name + prompt.) */
-export function isTranslationMode(
-  mode: { prompt?: string; name?: string } | null
-): boolean {
-  if (!mode) return false;
-  const text = ((mode.prompt || "") + " " + (mode.name || "")).toLowerCase();
-  return text.includes("traduc") || text.includes("translat");
-}
-
-/** Try to detect the target language of a translation mode from its name. */
-export function getTargetLangFromMode(mode: {
-  name?: string;
-}): string | null {
-  const name = (mode.name || "").toLowerCase();
-  for (const code in LANG_MAP) {
-    if (name.includes(LANG_MAP[code]!)) return code;
-  }
-  if (name.includes("english")) return "en";
-  if (name.includes("french") || name.includes("francais")) return "fr";
-  if (name.includes("german") || name.includes("deutsch")) return "de";
-  if (name.includes("italian") || name.includes("italiano")) return "it";
-  if (name.includes("portuguese") || name.includes("portugues")) return "pt";
-  if (name.includes("chinese") || name.includes("chino")) return "zh";
-  if (name.includes("japanese") || name.includes("japones")) return "ja";
-  if (name.includes("korean") || name.includes("coreano")) return "ko";
-  return null;
 }
 
 /** Type guard: is this mode a group? */

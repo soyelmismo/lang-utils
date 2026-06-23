@@ -295,6 +295,70 @@ export const CONTENT_STYLES = `
 }
 .lu-form-undo:hover { filter: brightness(1.1); }
 
+/* ---- Result popup (transient, near selection) ---- */
+#lang-utils-popup {
+  position: absolute;
+  background: var(--lu-bg-panel, #1a1a2e);
+  color: var(--lu-text, #eee);
+  border: 1px solid var(--lu-border, #16213e);
+  border-radius: var(--lu-radius-lg, 12px);
+  box-shadow: var(--lu-shadow-lg, 0 8px 32px rgba(0,0,0,.5));
+  z-index: 2147483647;
+  font-family: var(--lu-font, -apple-system, sans-serif);
+  font-size: 14px;
+  overflow: hidden;
+  animation: luPopupIn .18s ease-out;
+  display: flex; flex-direction: column;
+}
+@keyframes luPopupIn {
+  from { opacity: 0; transform: scale(0.96) translateY(-2px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+#lang-utils-popup .lu-popup-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--lu-border, #16213e);
+  border-bottom: 1px solid var(--lu-border-strong, #0f3460);
+  flex: 0 0 auto;
+}
+#lang-utils-popup .lu-popup-title {
+  font-weight: 600; font-size: 13px;
+  color: var(--lu-accent, #e94560);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+#lang-utils-popup .lu-popup-copy {
+  background: none; border: none;
+  color: var(--lu-text-muted, #aaa);
+  cursor: pointer; font-size: 14px;
+  padding: 2px 6px; border-radius: 4px;
+  position: absolute; top: 4px; right: 4px;
+}
+#lang-utils-popup .lu-popup-copy:hover {
+  color: var(--lu-text, #fff);
+  background: var(--lu-border-strong, #0f3460);
+}
+#lang-utils-popup .lu-popup-body {
+  padding: 12px 14px;
+  overflow-y: auto;
+  flex: 1 1 auto;
+  word-wrap: break-word;
+  position: relative;
+}
+#lang-utils-popup .lu-popup-body::-webkit-scrollbar { width: 6px; }
+#lang-utils-popup .lu-popup-body::-webkit-scrollbar-track { background: transparent; }
+#lang-utils-popup .lu-popup-body::-webkit-scrollbar-thumb {
+  background: var(--lu-border-strong, #0f3460);
+  border-radius: 3px;
+}
+#lang-utils-popup .lu-error {
+  color: var(--lu-accent, #e94560);
+  font-size: 13px;
+}
+#lang-utils-popup .lu-loading {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; color: var(--lu-text-muted, #aaa);
+}
+
 /* ---- Translate-write indicator on field ---- */
 .lu-tw-field-active {
   outline: 2px solid var(--lu-accent, #e94560) !important;

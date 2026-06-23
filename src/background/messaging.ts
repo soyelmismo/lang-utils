@@ -31,8 +31,6 @@ import {
   findModeById,
   getEffectiveModel,
   getEffectivePrompt,
-  getTargetLangFromMode,
-  isTranslationMode,
   ModeLookup,
 } from "./mode-helpers";
 
@@ -44,6 +42,7 @@ let settings: Settings = {
   model: "gpt-4o-mini",
   temperature: 0.7,
   language: "es",
+  resultPopup: true,
 };
 let popupWindowId: number | null = null;
 
@@ -52,12 +51,6 @@ export function log(...args: unknown[]): void {
   // eslint-disable-next-line no-console
   console.log("[Lang Utils]", ...args);
 }
-
-/** Max characters of text sent to the LLM for language detection (saves tokens). */
-const DETECTION_TEXT_PREVIEW_CHARS = 500;
-
-/** Skip auto-detection when the text is shorter than this (too ambiguous). */
-const MIN_TEXT_FOR_AUTO_DETECT = 10;
 
 /** Number of characters echoed back from the API test connection (for the user to confirm the model is alive). */
 const API_TEST_ECHO_CHARS = 60;
@@ -248,30 +241,7 @@ interface ProcessOpts {
   name: string;
 }
 
-/** Detect the language of a piece of text via the LLM. */
-async function detectLanguage(text: string): Promise<string | null> {
-  if (!settings.apiKey) return null;
-  try {
-    const promptText =
-      "What language is this text written in? Reply with ONLY the 2-letter ISO 639-1 code (e.g., es, en, fr, de, pt, it, zh, ja, ko, ar, hi, ru, nl, pl, tr). Nothing else.\n\n" +
-      text.substring(0, DETECTION_TEXT_PREVIEW_CHARS);
-    const result = await doAPIFetch(
-      buildBody([{ role: "user", content: promptText }], "", settings),
-      settings
-    );
-    const code = (result || "")
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z]/g, "")
-      .substring(0, 2);
-    return code || null;
-  } catch (e) {
-    log("Language detection failed:", (e as Error).message);
-    return null;
-  }
-}
-
-/** Process a selection with AI: auto-detect for translation modes, show panel. */
+/** Process a selection with AI and show the result panel. */
 export async function processWithAI(
   prompt: string,
   tab: browser.Tabs.Tab | { id?: number },
@@ -283,32 +253,6 @@ export async function processWithAI(
   if (tabId < 0) {
     log("ERROR: No tab id");
     return;
-  }
-
-  // Auto-detect for translation modes
-  if (isTranslationMode(modeOpts)) {
-    const parts = prompt.split("\n\n");
-    const actualText = parts[parts.length - 1] || "";
-    if (actualText.length > MIN_TEXT_FOR_AUTO_DETECT) {
-      const detected = await detectLanguage(actualText);
-      const targetCode = getTargetLangFromMode(modeOpts);
-      if (detected && targetCode && detected === targetCode) {
-        const langName = LANG_MAP[detected] || detected;
-        const sent = await sendToTab(tabId, {
-          type: "show-confirm",
-          title: modeName,
-          content:
-            msg("bg_same_lang_confirm") +
-            langName +
-            msg("bg_same_lang_confirm_suffix"),
-          originalPrompt: prompt,
-          modeName: modeName,
-          model: modeOpts.model || "",
-        });
-        if (!sent) log("Could not send confirm to tab");
-        return;
-      }
-    }
   }
 
   const sent = await sendToTab(tabId, { type: "show-loading", title: modeName });
@@ -793,17 +737,6 @@ export async function onMessage(
 
     case "process-mode-from-tab":
       return processModeFromTab(message.modeId, message.subModeId, message.text);
-
-    case "confirm-proceed":
-      if (message.proceed) {
-        void processWithAI(
-          message.originalPrompt,
-          sender.tab || { id: message.tabId },
-          message.modeName,
-          { model: message.model || "", name: message.modeName }
-        );
-      }
-      return { ok: true };
 
     case "reset-modes":
       currentModes = cloneDefaultModes();

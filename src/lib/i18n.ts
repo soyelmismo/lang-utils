@@ -77,6 +77,9 @@ const EN_MESSAGES: Record<MessageKey, string> = {
   options_tw_debounce: "Debounce (milliseconds)",
   options_tw_debounce_hint:
     "Wait time after you stop typing (500-5000ms)",
+  options_result_popup: "Result popup",
+  options_result_popup_hint:
+    "Show results as a small popup near the selected text that closes when you click outside or change focus.",
   options_themes_title: "Theme",
   options_themes_select: "Select a theme",
   options_themes_customize: "Customize colors",
@@ -149,8 +152,6 @@ const EN_MESSAGES: Record<MessageKey, string> = {
   content_error: "Error",
   content_processing: "Processing with AI...",
   content_copy_all: "Copy all",
-  content_confirm_yes: "Yes, process",
-  content_confirm_no: "Cancel",
   content_undo: "Undo",
   content_tw_active: "Translate mode active",
   content_tw_stop: "Stop translation",
@@ -169,9 +170,6 @@ const EN_MESSAGES: Record<MessageKey, string> = {
   chatbot_translate_es: "Translate ES",
   bg_api_not_configured:
     "No API key configured. Go to extension settings.",
-  bg_lang_detection_failed: "Language detection failed",
-  bg_same_lang_confirm: "The text is already in ",
-  bg_same_lang_confirm_suffix: ". Process anyway?",
   bg_system_prompt:
     "You are a language utility assistant. Reply clear and direct.",
   bg_test_prompt: "Reply with only the word OK",

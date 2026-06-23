@@ -119,6 +119,12 @@
   "options_tw_debounce_hint": {
     "message": "Tiempo de espera despues de dejar de escribir (500-5000ms)"
   },
+  "options_result_popup": {
+    "message": "Popup de resultado"
+  },
+  "options_result_popup_hint": {
+    "message": "Muestra los resultados como un popup pequeño cerca del texto seleccionado que se cierra al hacer click fuera o cambiar de foco."
+  },
   "mode_name": {
     "message": "Nombre del modo"
   },
@@ -254,12 +260,6 @@
   "content_copy_all": {
     "message": "Copiar todo"
   },
-  "content_confirm_yes": {
-    "message": "Si, procesar"
-  },
-  "content_confirm_no": {
-    "message": "Cancelar"
-  },
   "content_undo": {
     "message": "Deshacer"
   },
@@ -304,15 +304,6 @@
   },
   "bg_api_not_configured": {
     "message": "No API key configured. Go to extension settings."
-  },
-  "bg_lang_detection_failed": {
-    "message": "Language detection failed"
-  },
-  "bg_same_lang_confirm": {
-    "message": "El texto ya esta en "
-  },
-  "bg_same_lang_confirm_suffix": {
-    "message": ". Procesar de todas formas?"
   },
   "lang_es": {
     "message": "Espanol"

@@ -73,6 +73,7 @@ let currentSettings: Settings = {
   model: "gpt-4o-mini",
   temperature: 0.7,
   language: "es",
+  resultPopup: true,
 };
 let currentModes: AnyMode[] = [];
 const translatingModes: Record<string, boolean> = {};
@@ -111,6 +112,10 @@ async function loadSettings(): Promise<void> {
   setValue("api-key", currentSettings.apiKey || "");
   setValue("model", currentSettings.model || "");
   setValue("temperature", String(currentSettings.temperature ?? DEFAULT_TEMPERATURE));
+  const popupCb = document.getElementById(
+    "result-popup"
+  ) as HTMLInputElement | null;
+  if (popupCb) popupCb.checked = currentSettings.resultPopup !== false;
 
   const stored = await browser.storage.local.get(["uiLocale"]);
   const locale = (stored.uiLocale as string) || currentSettings.language || "es";
@@ -126,12 +131,16 @@ async function loadModes(): Promise<void> {
 }
 
 function readSettingsForm(): Settings {
+  const popupCb = document.getElementById(
+    "result-popup"
+  ) as HTMLInputElement | null;
   return {
     apiUrl: getValue("api-url").trim(),
     apiKey: getValue("api-key").trim(),
     model: getValue("model").trim(),
     temperature: parseFloat(getValue("temperature")) || DEFAULT_TEMPERATURE,
     language: getValue("main-language"),
+    resultPopup: popupCb ? popupCb.checked : true,
   };
 }
 
