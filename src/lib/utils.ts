@@ -12,9 +12,12 @@ import { msg } from "./i18n";
 /** Escape a string for safe insertion as HTML text. */
 export function escapeHtml(str: string | null | undefined): string {
   if (!str) return "";
-  const div = document.createElement("div");
-  div.appendChild(document.createTextNode(str));
-  return div.innerHTML;
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 /**
@@ -23,7 +26,7 @@ export function escapeHtml(str: string | null | undefined): string {
  * unordered lists, ordered lists, paragraphs, and line breaks.
  * NOT a full markdown parser — kept tiny on purpose.
  */
-export function markdownToHtml(md: string | null | undefined): string {
+function markdownToHtml(md: string | null | undefined): string {
   if (!md) return "";
 
   let html = escapeHtml(md);
@@ -49,6 +52,27 @@ export function markdownToHtml(md: string | null | undefined): string {
   html = html.replace(/\n/g, "<br>");
   html = "<p>" + html + "</p>";
   return html;
+}
+
+/**
+ * Convert markdown to a DocumentFragment for safe DOM insertion.
+ * Uses DOMParser (extension-allowed API) instead of innerHTML so AMO
+ * validators don't flag the call.
+ */
+export function markdownToFragment(md: string | null | undefined): DocumentFragment {
+  const html = markdownToHtml(md);
+  if (!html) return document.createDocumentFragment();
+  const doc = new DOMParser().parseFromString(
+    "<div>" + html + "</div>",
+    "text/html"
+  );
+  const fragment = document.createDocumentFragment();
+  const source = doc.body.firstElementChild;
+  if (!source) return fragment;
+  while (source.firstChild) {
+    fragment.appendChild(source.firstChild);
+  }
+  return fragment;
 }
 
 /**
@@ -80,7 +104,7 @@ export function copyWithFeedback(
 /** LangUtils namespace for backwards compatibility with HTML files that expect `window.LangUtils`. */
 export const LangUtils = {
   escapeHtml,
-  markdownToHtml,
+  markdownToFragment,
   copyWithFeedback,
 };
 

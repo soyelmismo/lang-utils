@@ -8,7 +8,9 @@
     "gecko": {
       "id": "lang-utils@extension",
       "strict_min_version": "112.0",
-      "data_collection_permissions": "none"
+      "data_collection_permissions": {
+        "content_scripts": []
+      }
     }
   },
   "permissions": [
@@ -23,7 +25,8 @@
   ],
   "background": {
     "service_worker": "background.js",
-    "type": "module"
+    "type": "module",
+    "scripts": ["background.js"]
   },
   "action": {
     "default_icon": {

@@ -6,7 +6,7 @@
 
 import browser from "../lib/browser-compat";
 import { i18n, msg } from "../lib/i18n";
-import { markdownToHtml, copyWithFeedback } from "../lib/utils";
+import { markdownToFragment, copyWithFeedback } from "../lib/utils";
 import { loadAndApplyTheme } from "../lib/themes";
 import { $div, $btn, $textarea } from "../lib/dom";
 import type { ChatMessage, ContentMessage } from "../types";
@@ -133,7 +133,7 @@ function addMessage(type: MessageType, content: string): void {
   if (type === "ai") {
     // Render trusted markdown from our own AI response. If the response ever
     // could include user-influenced HTML, switch to DOMPurify.
-    contentDiv.insertAdjacentHTML("beforeend", markdownToHtml(content));
+    contentDiv.appendChild(markdownToFragment(content));
   } else {
     contentDiv.textContent = content;
   }

@@ -7,7 +7,7 @@
 
 import browser from "../lib/browser-compat";
 import { i18n, msg, nativeLangName, langFlag, langCodes } from "../lib/i18n";
-import { escapeHtml, markdownToHtml, copyWithFeedback } from "../lib/utils";
+import { markdownToFragment, copyWithFeedback } from "../lib/utils";
 import { loadAndApplyTheme } from "../lib/themes";
 import { CONTENT_STYLES } from "./styles";
 import type { AnyMode, Mode, ModeGroup, Settings } from "../types";
@@ -204,7 +204,7 @@ function getSelectionRect(): DOMRect | null {
 /** Open a transient result popup anchored at the current selection. */
 function createPopup(
   title: string,
-  bodyHTML: string,
+  bodyContent: string | Node,
   extraOptions: { copyText?: string } = {}
 ): HTMLDivElement {
   closePopup();
@@ -222,7 +222,11 @@ function createPopup(
 
   const body = document.createElement("div");
   body.className = "lu-popup-body";
-  body.insertAdjacentHTML("beforeend", bodyHTML);
+  if (typeof bodyContent === "string") {
+    body.textContent = bodyContent;
+  } else {
+    body.appendChild(bodyContent);
+  }
 
   popup.appendChild(headerEl);
   popup.appendChild(body);
@@ -293,8 +297,8 @@ function createPopup(
 /** Create the result panel with title + content. */
 function createPanel(
   title: string,
-  contentHTML: string,
-  options: { actions?: string } = {}
+  content: string | Node,
+  options: { actions?: Node } = {}
 ): HTMLDivElement {
   removePanel();
   const panel = document.createElement("div");
@@ -329,12 +333,16 @@ function createPanel(
   const body = document.createElement("div");
   body.className = "lu-body";
   body.id = "lu-body";
-  body.insertAdjacentHTML("beforeend", contentHTML);
+  if (typeof content === "string") {
+    body.textContent = content;
+  } else {
+    body.appendChild(content);
+  }
 
   panel.appendChild(headerEl);
   panel.appendChild(body);
   if (options.actions) {
-    panel.insertAdjacentHTML("beforeend", options.actions);
+    panel.appendChild(options.actions);
   }
   document.body.appendChild(panel);
   currentPanel = panel;
@@ -428,40 +436,50 @@ function sendModeToAPI(
       removeToolbar();
       if (r && r.ok && r.content) {
         if (currentSettings.resultPopup) {
-          createPopup(msg("content_result"), markdownToHtml(r.content), {
+          createPopup(msg("content_result"), markdownToFragment(r.content), {
             copyText: r.content,
           });
         } else {
-          createPanel(msg("content_result"), markdownToHtml(r.content));
+          createPanel(msg("content_result"), markdownToFragment(r.content));
         }
       } else {
-        const errMsg = escapeHtml(
-          r ? r.error || "Unknown error" : "Unknown error"
-        );
+        const errMsg = r ? r.error || "Unknown error" : "Unknown error";
+        const errorDiv = document.createElement("div");
+        errorDiv.className = "lu-error";
+        errorDiv.textContent = errMsg;
         if (currentSettings.resultPopup) {
           createPopup(
             msg("content_error"),
-            '<div class="lu-error">' + errMsg + "</div>"
+            errorDiv
           );
         } else {
+          const errorDiv2 = document.createElement("div");
+          errorDiv2.className = "lu-error";
+          errorDiv2.textContent = errMsg;
           createPanel(
             msg("content_error"),
-            '<div class="lu-error">' + errMsg + "</div>"
+            errorDiv2
           );
         }
       }
     })
     .catch((err: Error) => {
       removeToolbar();
+      const catchErrorDiv = document.createElement("div");
+      catchErrorDiv.className = "lu-error";
+      catchErrorDiv.textContent = err.message;
       if (currentSettings.resultPopup) {
         createPopup(
           msg("content_error"),
-          '<div class="lu-error">' + escapeHtml(err.message) + "</div>"
+          catchErrorDiv
         );
       } else {
+        const catchErrorDiv2 = document.createElement("div");
+        catchErrorDiv2.className = "lu-error";
+        catchErrorDiv2.textContent = err.message;
         createPanel(
           msg("content_error"),
-          '<div class="lu-error">' + escapeHtml(err.message) + "</div>"
+          catchErrorDiv2
         );
       }
     });
@@ -1319,14 +1337,26 @@ function setupMessageHandler(): void {
 
         case "show-loading": {
           const title = String(message.title || "");
-          const body =
-            '<div class="lu-loading"><div class="lu-spinner"></div><span>' +
-            msg("content_processing") +
-            "</span></div>";
+          const loadingOuter = document.createElement("div");
+          loadingOuter.className = "lu-loading";
+          const spinner = document.createElement("div");
+          spinner.className = "lu-spinner";
+          loadingOuter.appendChild(spinner);
+          const loadingSpan = document.createElement("span");
+          loadingSpan.textContent = msg("content_processing");
+          loadingOuter.appendChild(loadingSpan);
           if (currentSettings.resultPopup) {
-            createPopup(title, body);
+            createPopup(title, loadingOuter);
           } else {
-            createPanel(title, body);
+            const loadingOuter2 = document.createElement("div");
+            loadingOuter2.className = "lu-loading";
+            const spinner2 = document.createElement("div");
+            spinner2.className = "lu-spinner";
+            loadingOuter2.appendChild(spinner2);
+            const loadingSpan2 = document.createElement("span");
+            loadingSpan2.textContent = msg("content_processing");
+            loadingOuter2.appendChild(loadingSpan2);
+            createPanel(title, loadingOuter2);
           }
           return;
         }
@@ -1334,21 +1364,23 @@ function setupMessageHandler(): void {
         case "show-result": {
           const title = String(message.title || "");
           const content = String(message.content || "");
-          const html = markdownToHtml(content);
+          const fragment = markdownToFragment(content);
           if (currentSettings.resultPopup) {
-            createPopup(title, html, { copyText: content });
+            createPopup(title, fragment, { copyText: content });
           } else {
-            createPanel(title, html, {
-              actions:
-                '<div class="lu-actions-bar"><button class="lu-action-btn" id="lu-copy-full">' +
-                msg("content_copy_all") +
-                "</button></div>",
-            });
-            const copyFull = document.getElementById("lu-copy-full");
-            copyFull?.addEventListener("click", () => {
+            const fragment2 = markdownToFragment(content);
+            const actionsBar = document.createElement("div");
+            actionsBar.className = "lu-actions-bar";
+            const copyFullBtn = document.createElement("button");
+            copyFullBtn.className = "lu-action-btn";
+            copyFullBtn.id = "lu-copy-full";
+            copyFullBtn.textContent = msg("content_copy_all");
+            actionsBar.appendChild(copyFullBtn);
+            createPanel(title, fragment2, { actions: actionsBar });
+            copyFullBtn.addEventListener("click", () => {
               copyWithFeedback(
                 content,
-                copyFull as HTMLButtonElement,
+                copyFullBtn as HTMLButtonElement,
                 msg("content_copy_all")
               );
             });
@@ -1359,16 +1391,16 @@ function setupMessageHandler(): void {
         case "show-error": {
           const title = String(message.title || "");
           const content = String(message.content || "");
+          const showErrorDiv = document.createElement("div");
+          showErrorDiv.className = "lu-error";
+          showErrorDiv.textContent = content;
           if (currentSettings.resultPopup) {
-            createPopup(
-              title,
-              '<div class="lu-error">' + escapeHtml(content) + "</div>"
-            );
+            createPopup(title, showErrorDiv);
           } else {
-            createPanel(
-              title,
-              '<div class="lu-error">' + escapeHtml(content) + "</div>"
-            );
+            const showErrorDiv2 = document.createElement("div");
+            showErrorDiv2.className = "lu-error";
+            showErrorDiv2.textContent = content;
+            createPanel(title, showErrorDiv2);
           }
           return;
         }
