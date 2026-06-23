@@ -11,6 +11,7 @@ import { escapeHtml, markdownToHtml, copyWithFeedback } from "../lib/utils";
 import { loadAndApplyTheme } from "../lib/themes";
 import { CONTENT_STYLES } from "./styles";
 import type { AnyMode, Mode, ModeGroup, Settings } from "../types";
+import { DEFAULT_SETTINGS } from "../types";
 
 // ---- Guard against double-injection ----
 declare global {
@@ -119,16 +120,7 @@ async function contentMain(): Promise<void> {
 // ============================================================
 
 /** Local copy of the user's settings, loaded once at content script init. */
-let currentSettings: Settings = {
-  apiUrl: "https://api.openai.com/v1",
-  apiKey: "",
-  model: "gpt-4o-mini",
-  temperature: 0.7,
-  language: "es",
-  resultPopup: true,
-  favoriteTargetLang: "es",
-  autoSetFavorite: false,
-};
+let currentSettings: Settings = { ...DEFAULT_SETTINGS };
 
 let currentPanel: HTMLDivElement | null = null;
 let currentPopup: HTMLDivElement | null = null;

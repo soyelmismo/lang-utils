@@ -21,6 +21,7 @@ import {
   Result,
   Settings,
   SubMode,
+  DEFAULT_SETTINGS,
 } from "../types";
 import {
   cloneDefaultModes,
@@ -36,16 +37,7 @@ import {
 
 // ---- Module state (single source of truth in background) ----
 let currentModes: AnyMode[] = [];
-let settings: Settings = {
-  apiUrl: "https://api.openai.com/v1",
-  apiKey: "",
-  model: "gpt-4o-mini",
-  temperature: 0.7,
-  language: "es",
-  resultPopup: true,
-  favoriteTargetLang: "es",
-  autoSetFavorite: false,
-};
+let settings: Settings = { ...DEFAULT_SETTINGS };
 let popupWindowId: number | null = null;
 
 /** Tagged console.log with [Lang Utils] prefix. */

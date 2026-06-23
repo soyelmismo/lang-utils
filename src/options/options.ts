@@ -39,6 +39,7 @@ import type {
   ThemeSettings,
   TranslateWriteSettings,
 } from "../types";
+import { DEFAULT_SETTINGS } from "../types";
 
 // ============================================
 // UI tunables
@@ -67,16 +68,7 @@ const TW_DEFAULT_DEBOUNCE_MS = 1500;
 const TW_MIN_DEBOUNCE_MS = 500;
 const TW_MAX_DEBOUNCE_MS = 5000;
 
-let currentSettings: Settings = {
-  apiUrl: "https://api.openai.com/v1",
-  apiKey: "",
-  model: "gpt-4o-mini",
-  temperature: 0.7,
-  language: "es",
-  resultPopup: true,
-  favoriteTargetLang: "es",
-  autoSetFavorite: false,
-};
+let currentSettings: Settings = { ...DEFAULT_SETTINGS };
 let currentModes: AnyMode[] = [];
 const translatingModes: Record<string, boolean> = {};
 
