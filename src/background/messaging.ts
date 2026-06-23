@@ -7,7 +7,7 @@
 
 import browser from "../lib/browser-compat";
 import { storage } from "../lib/storage";
-import { i18n, msg } from "../lib/i18n";
+import { i18n, msg, nativeLangName } from "../lib/i18n";
 import {
   buildBody,
   callAPI,
@@ -153,9 +153,13 @@ export function buildContextMenus(): void {
       } else if (mode.type === "single" && mode.prompt === "__CHATBOT__") {
         continue; // chatbot already added above
       } else {
+        const resolvedName = mode.name.replace(
+          /\{\{targetLang\}\}/g,
+          nativeLangName(settings.favoriteTargetLang)
+        );
         browser.contextMenus.create({
           id: "mode-" + mode.id,
-          title: mode.name + (mode.favorite ? " \u2B50" : ""),
+          title: resolvedName + (mode.favorite ? " \u2B50" : ""),
           parentId: "lang-utils-root",
           contexts: ["selection"],
         });
@@ -168,6 +172,33 @@ export function buildContextMenus(): void {
 // ============================================
 //  TAB / INJECTION HELPERS
 // ============================================
+
+/** Persist currentModes, rebuild context menu entries, and tell any active tabs
+ *  their cached modes are stale (so toolbars refresh). */
+async function persistModes(): Promise<void> {
+  await storage.setModes(currentModes);
+  buildContextMenus();
+  await broadcastModesUpdated();
+}
+
+/** Broadcast a 'modes-updated' signal to every active tab so content scripts
+ *  (toolbar) can refresh their mode list. */
+export async function broadcastModesUpdated(): Promise<void> {
+  try {
+    const tabs = await browser.tabs.query({});
+    for (const t of tabs) {
+      if (typeof t.id === "number") {
+        void browser.tabs
+          .sendMessage(t.id, { type: "modes-updated" })
+          .catch(() => {
+            // tab may not have a content script (e.g. chrome://, about:)
+          });
+      }
+    }
+  } catch (err) {
+    log("broadcastModesUpdated failed:", (err as Error).message);
+  }
+}
 
 interface TabLike {
   id?: number;
@@ -611,9 +642,12 @@ export async function onContextMenuClicked(
       log("ERROR: Top-level mode is a group:", modeId);
       return;
     }
-    const prompt = getEffectivePrompt(mode, selectionText);
+    const prompt = getEffectivePrompt(mode, selectionText, settings.favoriteTargetLang);
     const model = getEffectiveModel(null, mode);
-    const displayName = mode.name;
+    const displayName = mode.name.replace(
+      /\{\{targetLang\}\}/g,
+      nativeLangName(settings.favoriteTargetLang)
+    );
     log("Processing mode:", displayName);
     await processWithAI(prompt, resolvedTab, displayName, {
       model,
@@ -663,22 +697,19 @@ export async function onMessage(
 
     case "save-modes":
       currentModes = message.modes;
-      await storage.setModes(currentModes);
-      buildContextMenus();
+      await persistModes();
       return { ok: true };
 
     case "add-mode":
       currentModes.push(message.mode);
-      await storage.setModes(currentModes);
-      buildContextMenus();
+      await persistModes();
       return { ok: true, modes: currentModes };
 
     case "update-mode":
       currentModes = currentModes.map((m) =>
         m.id === message.mode.id ? message.mode : m
       );
-      await storage.setModes(currentModes);
-      buildContextMenus();
+      await persistModes();
       return { ok: true, modes: currentModes };
 
     case "delete-mode": {
@@ -687,8 +718,7 @@ export async function onMessage(
         return { ok: false, error: "Cannot delete protected mode" };
       }
       currentModes = currentModes.filter((m) => m.id !== message.id);
-      await storage.setModes(currentModes);
-      buildContextMenus();
+      await persistModes();
       return { ok: true, modes: currentModes };
     }
 
@@ -696,8 +726,7 @@ export async function onMessage(
       currentModes = currentModes.map((m) =>
         m.id === message.id ? { ...m, favorite: !m.favorite } : m
       );
-      await storage.setModes(currentModes);
-      buildContextMenus();
+      await persistModes();
       return { ok: true, modes: currentModes };
 
     case "add-sub-mode": {
@@ -708,8 +737,7 @@ export async function onMessage(
         }
         return m;
       });
-      await storage.setModes(currentModes);
-      buildContextMenus();
+      await persistModes();
       return { ok: true, modes: currentModes };
     }
 
@@ -725,8 +753,7 @@ export async function onMessage(
         }
         return m;
       });
-      await storage.setModes(currentModes);
-      buildContextMenus();
+      await persistModes();
       return { ok: true, modes: currentModes };
     }
 
@@ -740,8 +767,7 @@ export async function onMessage(
         }
         return m;
       });
-      await storage.setModes(currentModes);
-      buildContextMenus();
+      await persistModes();
       return { ok: true, modes: currentModes };
     }
 
@@ -754,8 +780,7 @@ export async function onMessage(
 
     case "reset-modes":
       currentModes = cloneDefaultModes();
-      await storage.setModes(currentModes);
-      buildContextMenus();
+      await persistModes();
       return { ok: true, modes: currentModes };
 
     case "close-popup":

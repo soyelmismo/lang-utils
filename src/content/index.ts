@@ -586,10 +586,10 @@ function showToolbar(x: number, y: number, selectedText: string): void {
   document.body.appendChild(toolbarEl);
 }
 
-/** Set up the toolbar: load modes + listen for selection changes. */
-function setupToolbar(): void {
-  // Load modes
-  browser.runtime
+/** Fetch modes from the background, classify into favorites + groups, and
+ *  ensure the protected translate-to-favorite mode is always present. */
+function refreshToolbarModes(): Promise<void> {
+  return browser.runtime
     .sendMessage({ type: "get-modes" })
     .then((resp: unknown) => {
       const r = resp as { modes?: AnyMode[] } | undefined;
@@ -626,6 +626,12 @@ function setupToolbar(): void {
     .catch(() => {
       // ignore — content script may run before background is ready
     });
+}
+
+/** Set up the toolbar: load modes + listen for selection changes. */
+function setupToolbar(): void {
+  // Load modes (initial fetch)
+  void refreshToolbarModes();
 
   // Selection changes → show toolbar
   document.addEventListener("mouseup", (e: MouseEvent) => {
@@ -1253,6 +1259,14 @@ function setupMessageHandler(): void {
             showFormButton(activeField);
             showFormMenu(activeField);
           }
+          return;
+        }
+
+        case "modes-updated": {
+          // Toolbar must reflect the latest mode list (favorites, additions,
+          // deletions, edits). Re-fetch and rebuild.
+          removeToolbar();
+          void refreshToolbarModes();
           return;
         }
       }
