@@ -47,15 +47,33 @@ browser.runtime.onMessage.addListener((message: unknown, sender: unknown) => {
 });
 
 // ---- Lifecycle: handle install / startup ----
-browser.runtime.onInstalled.addListener(() => {
-  log("Extension installed/updated");
+browser.runtime.onInstalled.addListener((details) => {
+  if (details.reason === "update") {
+    log("Extension updated — cleaning up ghost UI in all tabs");
+    broadcastCleanup();
+  } else {
+    log("Extension installed");
+  }
 });
 
 // On browser startup, re-init in case the service worker was killed
 if (browser.runtime.onStartup) {
   browser.runtime.onStartup.addListener(() => {
-    log("Browser startup — re-initializing");
+    log("Browser startup — re-initializing + cleanup");
     void init();
+    broadcastCleanup();
+  });
+}
+
+function broadcastCleanup(): void {
+  browser.tabs.query({}).then((tabs) => {
+    for (const tab of tabs) {
+      if (tab.id) {
+        browser.tabs.sendMessage(tab.id, { type: "cleanup-ui" }).catch(() => {
+          // Ignore tabs that can't receive messages (e.g., chrome://, about:)
+        });
+      }
+    }
   });
 }
 

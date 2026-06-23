@@ -168,7 +168,8 @@ export type BackgroundMessage =
   | { type: "get-favorites" }
   | { type: "get-translate-write-settings" }
   | { type: "save-translate-write-settings"; settings: TranslateWriteSettings }
-  | { type: "translate-write"; text: string; targetLang: string; sourceLang: string };
+  | { type: "translate-write"; text: string; targetLang: string; sourceLang: string }
+  | { type: "cleanup-ui" };
 
 /** Messages sent from background → content script. */
 export type ContentMessage =
@@ -186,7 +187,8 @@ export type ContentMessage =
     }
   | { type: "chat-response"; content: string }
   | { type: "chat-error"; content: string }
-  | { type: "toggle-translate-write" };
+  | { type: "toggle-translate-write" }
+  | { type: "cleanup-ui" };
 
 /** Default settings used on first install. */
 export const DEFAULT_SETTINGS: Settings = {

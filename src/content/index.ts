@@ -85,6 +85,10 @@ const POPUP_FALLBACK_OFFSET_PX = 20;
 
 /** Main entry point for the content script. */
 async function contentMain(): Promise<void> {
+  // Clean up any ghost UI from a previous extension version/reload
+  removeToolbar();
+  removePanel();
+
   // Apply the user's theme to this page's :root so injected UI matches.
   await loadAndApplyTheme();
   await i18n.init();
@@ -1431,6 +1435,14 @@ function setupMessageHandler(): void {
           // Options/background saved new settings (favoriteTargetLang,
           // resultPopup, translate-write target/debounce, etc.).
           void refreshSettings();
+          return;
+        }
+
+        case "cleanup-ui": {
+          // Extension updated or browser started — remove any ghost UI from
+          // previous versions that might still be in the DOM.
+          removeToolbar();
+          removePanel();
           return;
         }
       }
