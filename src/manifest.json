@@ -57,5 +57,6 @@
       ],
       "matches": ["<all_urls>"]
     }
-  ]
+  ],
+  "data_collection_permissions": "none"
 }
