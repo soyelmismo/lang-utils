@@ -12,6 +12,8 @@ export interface Mode {
   type: "single";
   favorite: boolean;
   isDefault?: boolean;
+  /** Shipped with the extension and editable, but cannot be deleted by the user. */
+  protected?: boolean;
   /** Translation state — present when the user clicked 🌐 to translate the mode's name+prompt. */
   _originalName?: string;
   _originalPrompt?: string;
@@ -53,6 +55,12 @@ export interface Settings {
   temperature: number;
   /** Main language code (used for auto-detection + mode translation). */
   language: string;
+  /** Show result/loading/error as a transient popup near the selection instead of a persistent panel. */
+  resultPopup: boolean;
+  /** ISO 639-1 code of the language the toolbar's "Translate to" button targets. */
+  favoriteTargetLang: string;
+  /** When the user picks a different language from the toolbar submenu, persist it as the new favorite. */
+  autoSetFavorite: boolean;
 }
 
 /** Settings for the "Translate / Write" mode (live translation while typing). */
@@ -144,7 +152,7 @@ export type BackgroundMessage =
   | { type: "update-sub-mode"; groupId: string; subMode: SubMode }
   | { type: "delete-sub-mode"; groupId: string; subId: string }
   | { type: "chat-message"; messages: ChatMessage[] }
-  | { type: "process-mode-from-tab"; modeId: string; subModeId: string; text: string }
+  | { type: "process-mode-from-tab"; modeId: string; subModeId: string; text: string; targetLang?: string }
   | {
       type: "confirm-proceed";
       proceed: boolean;
@@ -187,6 +195,9 @@ export const DEFAULT_SETTINGS: Settings = {
   model: "gpt-4o-mini",
   temperature: 0.7,
   language: "es",
+  resultPopup: true,
+  favoriteTargetLang: "es",
+  autoSetFavorite: false,
 };
 
 /** Default Translate/Write settings. */

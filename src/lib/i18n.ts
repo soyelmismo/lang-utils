@@ -8,23 +8,26 @@
 import browser from "./browser-compat";
 import type { MessageKey } from "../types/messages";
 
-/** Map of supported language codes → display names. */
-export const LANG_NAMES: Record<string, { es: string; en: string }> = {
-  es: { es: "Espanol", en: "Spanish" },
-  en: { es: "English", en: "English" },
-  pt: { es: "Portugues", en: "Portuguese" },
-  fr: { es: "Francais", en: "French" },
-  de: { es: "Deutsch", en: "German" },
-  it: { es: "Italiano", en: "Italian" },
-  zh: { es: "Chino", en: "Chinese" },
-  ja: { es: "Japones", en: "Japanese" },
-  ko: { es: "Coreano", en: "Korean" },
-  ru: { es: "Ruso", en: "Russian" },
-  nl: { es: "Holandes", en: "Dutch" },
-  pl: { es: "Polaco", en: "Polish" },
-  tr: { es: "Turco", en: "Turkish" },
-  ar: { es: "Arabe", en: "Arabic" },
-  hi: { es: "Hindi", en: "Hindi" },
+/** Map of supported language codes → native name (the language's own name) and ES/EN fallbacks. */
+export const LANG_NAMES: Record<
+  string,
+  { native: string; es: string; en: string }
+> = {
+  es: { native: "Espanol", es: "Espanol", en: "Spanish" },
+  en: { native: "English", es: "English", en: "English" },
+  pt: { native: "Portugues", es: "Portugues", en: "Portuguese" },
+  fr: { native: "Francais", es: "Frances", en: "French" },
+  de: { native: "Deutsch", es: "Aleman", en: "German" },
+  it: { native: "Italiano", es: "Italiano", en: "Italian" },
+  zh: { native: "中文", es: "Chino", en: "Chinese" },
+  ja: { native: "日本語", es: "Japones", en: "Japanese" },
+  ko: { native: "한국어", es: "Coreano", en: "Korean" },
+  ru: { native: "Русский", es: "Ruso", en: "Russian" },
+  nl: { native: "Nederlands", es: "Holandes", en: "Dutch" },
+  pl: { native: "Polski", es: "Polaco", en: "Polish" },
+  tr: { native: "Turkce", es: "Turco", en: "Turkish" },
+  ar: { native: "العربية", es: "Arabe", en: "Arabic" },
+  hi: { native: "हिन्दी", es: "Hindi", en: "Hindi" },
 };
 
 /** English fallback messages (hardcoded so the extension works even if locale files are missing). */
@@ -281,6 +284,38 @@ export function langName(code: string): string {
   const names = LANG_NAMES[code];
   if (!names) return code;
   return names[uiLang as "es" | "en"] || names.en || code;
+}
+
+/** Get the language's own native name (e.g. "Espanol", "中文"), regardless of UI locale. */
+export function nativeLangName(code: string): string {
+  return LANG_NAMES[code]?.native || code;
+}
+
+/** Regional indicator flag emoji for a language code (e.g. "es" -> "🇪🇸"), empty string if unknown. */
+export function langFlag(code: string): string {
+  const map: Record<string, string> = {
+    es: "🇪🇸",
+    en: "🇬🇧",
+    pt: "🇵🇹",
+    fr: "🇫🇷",
+    de: "🇩🇪",
+    it: "🇮🇹",
+    zh: "🇨🇳",
+    ja: "🇯🇵",
+    ko: "🇰🇷",
+    ru: "🇷🇺",
+    nl: "🇳🇱",
+    pl: "🇵🇱",
+    tr: "🇹🇷",
+    ar: "🇸🇦",
+    hi: "🇮🇳",
+  };
+  return map[code] || "";
+}
+
+/** All supported language codes, in display order. */
+export function langCodes(): string[] {
+  return Object.keys(LANG_NAMES);
 }
 
 /** Get all language options as [{code, name}]. */

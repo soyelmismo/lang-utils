@@ -5,7 +5,7 @@
 // ============================================
 
 import browser from "../lib/browser-compat";
-import { i18n, msg } from "../lib/i18n";
+import { i18n, msg, nativeLangName, langCodes } from "../lib/i18n";
 import { escapeHtml } from "../lib/utils";
 import {
   loadAndApplyTheme,
@@ -74,6 +74,8 @@ let currentSettings: Settings = {
   temperature: 0.7,
   language: "es",
   resultPopup: true,
+  favoriteTargetLang: "es",
+  autoSetFavorite: false,
 };
 let currentModes: AnyMode[] = [];
 const translatingModes: Record<string, boolean> = {};
@@ -117,6 +119,24 @@ async function loadSettings(): Promise<void> {
   ) as HTMLInputElement | null;
   if (popupCb) popupCb.checked = currentSettings.resultPopup !== false;
 
+  const favSel = document.getElementById(
+    "favorite-target-lang"
+  ) as HTMLSelectElement | null;
+  if (favSel) {
+    favSel.innerHTML = "";
+    for (const code of langCodes()) {
+      const opt = document.createElement("option");
+      opt.value = code;
+      opt.textContent = nativeLangName(code);
+      if (code === currentSettings.favoriteTargetLang) opt.selected = true;
+      favSel.appendChild(opt);
+    }
+  }
+  const autoCb = document.getElementById(
+    "auto-set-favorite"
+  ) as HTMLInputElement | null;
+  if (autoCb) autoCb.checked = currentSettings.autoSetFavorite === true;
+
   const stored = await browser.storage.local.get(["uiLocale"]);
   const locale = (stored.uiLocale as string) || currentSettings.language || "es";
   setValue("main-language", locale);
@@ -134,6 +154,12 @@ function readSettingsForm(): Settings {
   const popupCb = document.getElementById(
     "result-popup"
   ) as HTMLInputElement | null;
+  const favSel = document.getElementById(
+    "favorite-target-lang"
+  ) as HTMLSelectElement | null;
+  const autoCb = document.getElementById(
+    "auto-set-favorite"
+  ) as HTMLInputElement | null;
   return {
     apiUrl: getValue("api-url").trim(),
     apiKey: getValue("api-key").trim(),
@@ -141,6 +167,8 @@ function readSettingsForm(): Settings {
     temperature: parseFloat(getValue("temperature")) || DEFAULT_TEMPERATURE,
     language: getValue("main-language"),
     resultPopup: popupCb ? popupCb.checked : true,
+    favoriteTargetLang: favSel ? favSel.value : "es",
+    autoSetFavorite: autoCb ? autoCb.checked : false,
   };
 }
 
@@ -507,11 +535,13 @@ function renderModeCard(
     '" title="' +
     msg("modal_edit_mode") +
     '">\u270F\uFE0F</button>' +
-    '<button class="mode-delete-btn" data-id="' +
-    mode.id +
-    '" title="' +
-    msg("confirm_delete") +
-    '">\uD83D\uDDD1\uFE0F</button>' +
+    (mode.protected
+      ? ""
+      : '<button class="mode-delete-btn" data-id="' +
+        mode.id +
+        '" title="' +
+        msg("confirm_delete") +
+        '">\uD83D\uDDD1\uFE0F</button>') +
     "</div>" +
     "</div>" +
     '<div class="mode-card-prompt">' +
@@ -564,6 +594,9 @@ function attachEventListeners(container: HTMLElement): void {
         if (!mode) return;
         if (mode.type === "single" && mode.isDefault) {
           alert(msg("error_cannot_delete"));
+          return;
+        }
+        if (mode.type === "single" && mode.protected) {
           return;
         }
         if (confirm(msg("confirm_delete"))) {

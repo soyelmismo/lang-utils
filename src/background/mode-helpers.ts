@@ -28,12 +28,20 @@ export function findModeById(
   return null;
 }
 
-/** Replace {{selection}} placeholders in a prompt with the selected text. */
+/** Replace {{selection}} and {{targetLang}} placeholders in a prompt. */
 export function getEffectivePrompt(
   modeOrSub: { prompt?: string },
-  selectionText: string
+  selectionText: string,
+  targetLang?: string
 ): string {
-  return (modeOrSub.prompt || "").replace(/\{\{selection\}\}/g, selectionText);
+  let out = (modeOrSub.prompt || "").replace(
+    /\{\{selection\}\}/g,
+    selectionText
+  );
+  if (targetLang) {
+    out = out.replace(/\{\{targetLang\}\}/g, targetLang);
+  }
+  return out;
 }
 
 /** Get the effective model for a sub-mode, inheriting from parent group / global. */

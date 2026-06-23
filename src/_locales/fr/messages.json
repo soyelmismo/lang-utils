@@ -125,6 +125,18 @@
   "options_result_popup_hint": {
     "message": "Affiche les résultats dans une petite popup près du texte sélectionné qui se ferme au clic extérieur ou au changement de focus."
   },
+  "options_favorite_target_lang": {
+    "message": "Langue de traduction favorite"
+  },
+  "options_favorite_target_lang_hint": {
+    "message": "Bouton principal du toolbar. Le prompt est modifiable dans la liste des modes (mode \"Translate to...\")."
+  },
+  "options_auto_set_favorite": {
+    "message": "Mettre à jour le favori en choisissant une autre langue"
+  },
+  "options_auto_set_favorite_hint": {
+    "message": "Si activé, traduire vers une autre langue depuis le sous-menu l'enregistre comme nouveau favori. Sinon, traduit uniquement sans persister."
+  },
   "mode_name": {
     "message": "Nom du mode"
   },

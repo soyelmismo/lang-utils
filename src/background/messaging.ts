@@ -43,6 +43,8 @@ let settings: Settings = {
   temperature: 0.7,
   language: "es",
   resultPopup: true,
+  favoriteTargetLang: "es",
+  autoSetFavorite: false,
 };
 let popupWindowId: number | null = null;
 
@@ -292,7 +294,8 @@ export async function processWithAI(
 async function processModeFromTab(
   modeId: string,
   subModeId: string,
-  text: string
+  text: string,
+  targetLang?: string
 ): Promise<Result> {
   if (!settings.apiKey) {
     return { ok: false, error: msg("bg_api_not_configured") };
@@ -304,7 +307,7 @@ async function processModeFromTab(
     prompt?: string;
   };
   const model = getEffectiveModel(found.subMode, found.mode);
-  const prompt = getEffectivePrompt(effectiveMode, text);
+  const prompt = getEffectivePrompt(effectiveMode, text, targetLang);
 
   try {
     const result = await callAPI(
@@ -672,11 +675,16 @@ export async function onMessage(
       buildContextMenus();
       return { ok: true, modes: currentModes };
 
-    case "delete-mode":
+    case "delete-mode": {
+      const target = currentModes.find((m) => m.id === message.id);
+      if (target && "protected" in target && target.protected) {
+        return { ok: false, error: "Cannot delete protected mode" };
+      }
       currentModes = currentModes.filter((m) => m.id !== message.id);
       await storage.setModes(currentModes);
       buildContextMenus();
       return { ok: true, modes: currentModes };
+    }
 
     case "toggle-favorite":
       currentModes = currentModes.map((m) =>
@@ -736,7 +744,7 @@ export async function onMessage(
       return true; // async — response will come as a separate message
 
     case "process-mode-from-tab":
-      return processModeFromTab(message.modeId, message.subModeId, message.text);
+      return processModeFromTab(message.modeId, message.subModeId, message.text, message.targetLang);
 
     case "reset-modes":
       currentModes = cloneDefaultModes();

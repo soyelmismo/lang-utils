@@ -134,6 +134,20 @@
               <span class="hint" data-i18n="options_result_popup_hint">Muestra los resultados como un popup pequeño cerca del texto seleccionado que se cierra al hacer click fuera o cambiar de foco.</span>
             </div>
           </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label data-i18n="options_favorite_target_lang">Idioma favorito de traducción</label>
+              <select id="favorite-target-lang"></select>
+              <span class="hint" data-i18n="options_favorite_target_lang_hint">Botón principal del toolbar. Prompt editable en la lista de modos (modo "Translate to...").</span>
+            </div>
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="auto-set-favorite" />
+                <span data-i18n="options_auto_set_favorite">Actualizar favorito al elegir otro idioma</span>
+              </label>
+              <span class="hint" data-i18n="options_auto_set_favorite_hint">Si está activo, al traducir a otro idioma desde el submenú se guarda como nuevo favorito. Si no, sólo traduce sin persistir.</span>
+            </div>
+          </div>
           <div class="btn-row">
             <button type="submit" class="btn-primary" data-i18n="options_save">Guardar</button>
             <span id="tw-save-status" class="status-text"></span>

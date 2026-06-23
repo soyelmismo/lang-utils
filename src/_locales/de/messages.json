@@ -125,6 +125,18 @@
   "options_result_popup_hint": {
     "message": "Zeigt Ergebnisse als kleines Popup in der Nähe des ausgewählten Textes, das sich beim Klicken außerhalb oder Fokusverlust schließt."
   },
+  "options_favorite_target_lang": {
+    "message": "Bevorzugte Übersetzungssprache"
+  },
+  "options_favorite_target_lang_hint": {
+    "message": "Hauptbutton der Toolbar. Der Prompt ist in der Modusliste bearbeitbar (Modus \"Translate to...\")."
+  },
+  "options_auto_set_favorite": {
+    "message": "Favorit aktualisieren, wenn eine andere Sprache gewählt wird"
+  },
+  "options_auto_set_favorite_hint": {
+    "message": "Wenn aktiv, wird das Übersetzen in eine andere Sprache aus dem Untermenü als neuer Favorit gespeichert. Andernfalls wird nur übersetzt, ohne zu speichern."
+  },
   "mode_name": {
     "message": "Modusname"
   },

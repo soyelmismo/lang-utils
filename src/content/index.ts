@@ -6,11 +6,11 @@
 // ============================================
 
 import browser from "../lib/browser-compat";
-import { i18n, msg } from "../lib/i18n";
+import { i18n, msg, nativeLangName, langFlag, langCodes } from "../lib/i18n";
 import { escapeHtml, markdownToHtml, copyWithFeedback } from "../lib/utils";
 import { loadAndApplyTheme } from "../lib/themes";
 import { CONTENT_STYLES } from "./styles";
-import type { AnyMode, ModeGroup, Settings } from "../types";
+import type { AnyMode, Mode, ModeGroup, Settings } from "../types";
 
 // ---- Guard against double-injection ----
 declare global {
@@ -126,6 +126,8 @@ let currentSettings: Settings = {
   temperature: 0.7,
   language: "es",
   resultPopup: true,
+  favoriteTargetLang: "es",
+  autoSetFavorite: false,
 };
 
 let currentPanel: HTMLDivElement | null = null;
@@ -388,7 +390,8 @@ function sendModeToAPI(
   modeId: string,
   subModeId: string,
   selectedText: string,
-  btn: HTMLButtonElement | null
+  btn: HTMLButtonElement | null,
+  targetLang?: string
 ): void {
   if (btn) {
     btn.disabled = true;
@@ -400,6 +403,7 @@ function sendModeToAPI(
       modeId,
       subModeId: subModeId || "",
       text: selectedText,
+      ...(targetLang ? { targetLang } : {}),
     })
     .then((resp: unknown) => {
       const r = resp as { ok?: boolean; content?: string; error?: string };
@@ -445,18 +449,90 @@ function sendModeToAPI(
     });
 }
 
+/** Resolve {{targetLang}} placeholder in a mode name using the user's favorite target language. */
+function renderModeName(mode: Mode): string {
+  const target = currentSettings.favoriteTargetLang || "es";
+  return mode.name.replace(/\{\{targetLang\}\}/g, nativeLangName(target));
+}
+
 /** Show the floating toolbar at coordinates. */
 function showToolbar(x: number, y: number, selectedText: string): void {
   removeToolbar();
-  if (toolbarModes.length === 0 && toolbarGroups.length === 0) return;
 
   toolbarEl = document.createElement("div");
   toolbarEl.id = "lu-toolbar";
   toolbarEl.style.left = x + "px";
   toolbarEl.style.top = y + TOOLBAR_OFFSET_PX + "px";
 
-  // Single modes
+  // ── Always-present translate-to-favorite button (protected mode) ──────
+  const translateMode = toolbarModes.find(
+    (m): m is Mode => m.type === "single" && m.id === "translate-to-favorite"
+  );
+  if (translateMode) {
+    const langWrapper = document.createElement("div");
+    langWrapper.className = "lu-tb-group lu-tb-lang";
+
+    const langBtn = document.createElement("button");
+    langBtn.className = "lu-tb-btn lu-tb-fav";
+    const targetCode = currentSettings.favoriteTargetLang || "es";
+    const flag = langFlag(targetCode);
+    langBtn.innerHTML =
+      escapeHtml(flag + " " + renderModeName(translateMode)) +
+      '<span class="lu-tb-arrow">\u25BC</span>';
+
+    const langMenu = document.createElement("div");
+    langMenu.className = "lu-tb-group-menu lu-tb-lang-menu";
+
+    for (const code of langCodes()) {
+      const item = document.createElement("button");
+      item.className = "lu-tb-sub";
+      item.dataset.code = code;
+      if (code === targetCode) item.classList.add("lu-tb-sub-current");
+      item.innerHTML =
+        escapeHtml(langFlag(code) + " " + nativeLangName(code)) +
+        (code === targetCode
+          ? '<span class="lu-tb-check">\u2713</span>'
+          : "");
+      item.addEventListener("mousedown", (e: MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (currentSettings.autoSetFavorite) {
+          currentSettings.favoriteTargetLang = code;
+          void browser.runtime.sendMessage({
+            type: "save-settings",
+            settings: { favoriteTargetLang: code },
+          });
+        }
+        sendModeToAPI(
+          translateMode.id,
+          "",
+          selectedText,
+          null,
+          currentSettings.autoSetFavorite ? code : targetCode
+        );
+      });
+      langMenu.appendChild(item);
+    }
+
+    langBtn.addEventListener("mousedown", (e: MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const wasOpen = langMenu.classList.contains("lu-show");
+      document
+        .querySelectorAll<HTMLDivElement>(".lu-tb-group-menu.lu-show")
+        .forEach((m) => m.classList.remove("lu-show"));
+      if (!wasOpen) langMenu.classList.add("lu-show");
+    });
+
+    langWrapper.appendChild(langBtn);
+    langWrapper.appendChild(langMenu);
+    toolbarEl.appendChild(langWrapper);
+  }
+
+  // ── Other single modes (skip translate-to-favorite; already rendered) ──
   for (const mode of toolbarModes) {
+    if (mode.type !== "single") continue;
+    if (mode.id === "translate-to-favorite") continue;
     const btn = document.createElement("button");
     btn.className = mode.favorite ? "lu-tb-fav" : "lu-tb-btn";
     btn.textContent = mode.name;
@@ -468,7 +544,7 @@ function showToolbar(x: number, y: number, selectedText: string): void {
     toolbarEl.appendChild(btn);
   }
 
-  // Groups
+  // ── Group modes (sub-menus) ────────────────────────────────────────────
   for (const group of toolbarGroups) {
     const wrapper = document.createElement("div");
     wrapper.className = "lu-tb-group";
@@ -536,6 +612,15 @@ function setupToolbar(): void {
             (m) => m.type === "single" && m.prompt !== "__CHATBOT__"
           )
           .slice(0, TOOLBAR_MAX_FAVORITES);
+      }
+      // Ensure the protected translate-to-favorite mode is always present,
+      // even if the user toggled it off in favorites.
+      const hasTranslateMode = toolbarModes.some(
+        (m) => m.id === "translate-to-favorite"
+      );
+      if (!hasTranslateMode) {
+        const fallback = r.modes.find((m) => m.id === "translate-to-favorite");
+        if (fallback) toolbarModes.unshift(fallback);
       }
     })
     .catch(() => {

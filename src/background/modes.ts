@@ -86,26 +86,6 @@ export const DEFAULT_MODES: AnyMode[] = [
     ],
   },
   {
-    id: "translate-es",
-    name: "Traducir al espanol",
-    prompt:
-      "Traduce el siguiente texto al espanol. Responde SOLO con la traduccion:\n\n{{selection}}",
-    isDefault: true,
-    favorite: true,
-    model: "",
-    type: "single",
-  },
-  {
-    id: "translate-en",
-    name: "Translate to English",
-    prompt:
-      "Translate the following text to English. Reply ONLY with the translation:\n\n{{selection}}",
-    isDefault: true,
-    favorite: true,
-    model: "",
-    type: "single",
-  },
-  {
     id: "summarize",
     name: "Resumir texto",
     prompt: "Resume el siguiente texto de forma clara y concisa:\n\n{{selection}}",
@@ -140,6 +120,17 @@ export const DEFAULT_MODES: AnyMode[] = [
     prompt: "__CHATBOT__",
     isDefault: true,
     favorite: false,
+    model: "",
+    type: "single",
+  },
+  {
+    id: "translate-to-favorite",
+    name: "Traducir a {{targetLang}}",
+    prompt:
+      "Translate the following text to {{targetLang}}. Reply ONLY with the translation:\n\n{{selection}}",
+    isDefault: true,
+    protected: true,
+    favorite: true,
     model: "",
     type: "single",
   },

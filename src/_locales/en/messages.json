@@ -125,6 +125,18 @@
   "options_result_popup_hint": {
     "message": "Show results as a small popup near the selected text that closes when you click outside or change focus."
   },
+  "options_favorite_target_lang": {
+    "message": "Favorite translation language"
+  },
+  "options_favorite_target_lang_hint": {
+    "message": "Main toolbar button. The prompt is editable in the modes list (\"Translate to...\" mode)."
+  },
+  "options_auto_set_favorite": {
+    "message": "Update favorite when choosing another language"
+  },
+  "options_auto_set_favorite_hint": {
+    "message": "If enabled, translating to a different language from the submenu persists it as the new favorite. Otherwise it only translates without saving."
+  },
   "mode_name": {
     "message": "Mode name"
   },
