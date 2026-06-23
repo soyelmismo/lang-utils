@@ -200,6 +200,24 @@ export async function broadcastModesUpdated(): Promise<void> {
   }
 }
 
+/** Tell every active tab to re-fetch settings/tw-settings. */
+export async function broadcastSettingsUpdated(): Promise<void> {
+  try {
+    const tabs = await browser.tabs.query({});
+    for (const t of tabs) {
+      if (typeof t.id === "number") {
+        void browser.tabs
+          .sendMessage(t.id, { type: "settings-updated" })
+          .catch(() => {
+            // tab may not have a content script
+          });
+      }
+    }
+  } catch (err) {
+    log("broadcastSettingsUpdated failed:", (err as Error).message);
+  }
+}
+
 interface TabLike {
   id?: number;
 }
