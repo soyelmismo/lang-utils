@@ -178,43 +178,27 @@ export function buildContextMenus(): void {
 async function persistModes(): Promise<void> {
   await storage.setModes(currentModes);
   buildContextMenus();
-  await broadcastModesUpdated();
+  await broadcastUpdated("modes-updated");
 }
 
-/** Broadcast a 'modes-updated' signal to every active tab so content scripts
- *  (toolbar) can refresh their mode list. */
-export async function broadcastModesUpdated(): Promise<void> {
+/** Fire-and-forget broadcast: send a tab message to every active tab to
+ *  signal that a specific slice of state is stale and should be re-fetched.
+ *  Tabs without a content script (chrome://, about:, etc.) are silently
+ *  ignored per-tab. */
+export async function broadcastUpdated(messageType: string): Promise<void> {
   try {
     const tabs = await browser.tabs.query({});
     for (const t of tabs) {
       if (typeof t.id === "number") {
         void browser.tabs
-          .sendMessage(t.id, { type: "modes-updated" })
+          .sendMessage(t.id, { type: messageType })
           .catch(() => {
             // tab may not have a content script (e.g. chrome://, about:)
           });
       }
     }
   } catch (err) {
-    log("broadcastModesUpdated failed:", (err as Error).message);
-  }
-}
-
-/** Tell every active tab to re-fetch settings/tw-settings. */
-export async function broadcastSettingsUpdated(): Promise<void> {
-  try {
-    const tabs = await browser.tabs.query({});
-    for (const t of tabs) {
-      if (typeof t.id === "number") {
-        void browser.tabs
-          .sendMessage(t.id, { type: "settings-updated" })
-          .catch(() => {
-            // tab may not have a content script
-          });
-      }
-    }
-  } catch (err) {
-    log("broadcastSettingsUpdated failed:", (err as Error).message);
+    log("broadcastUpdated failed:", (err as Error).message);
   }
 }
 
@@ -711,6 +695,7 @@ export async function onMessage(
     case "save-settings":
       settings = { ...settings, ...message.settings };
       await storage.setSettings(settings);
+      await broadcastUpdated("settings-updated");
       return { ok: true };
 
     case "save-modes":
@@ -825,6 +810,7 @@ export async function onMessage(
 
     case "save-translate-write-settings":
       await storage.setTranslateWriteSettings(message.settings);
+      await broadcastUpdated("settings-updated");
       return { ok: true };
 
     case "translate-write":
