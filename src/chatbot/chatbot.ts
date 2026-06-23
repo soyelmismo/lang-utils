@@ -14,6 +14,9 @@ import type { ChatMessage, ContentMessage } from "../types";
 const params = new URLSearchParams(window.location.search);
 const selectedText = decodeURIComponent(params.get("text") || "");
 
+/** Max height in px that the chat input textarea auto-grows to. */
+const CHAT_INPUT_MAX_HEIGHT_PX = 120;
+
 const contextText = $div("context-text");
 const messagesContainer = $div("messages");
 const userInput = $textarea("user-input");
@@ -86,7 +89,7 @@ function setupListeners(): void {
   userInput?.addEventListener("input", () => {
     if (!userInput) return;
     userInput.style.height = "auto";
-    userInput.style.height = Math.min(userInput.scrollHeight, 120) + "px";
+    userInput.style.height = Math.min(userInput.scrollHeight, CHAT_INPUT_MAX_HEIGHT_PX) + "px";
   });
 
   // Close

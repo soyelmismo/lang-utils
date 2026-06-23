@@ -4,6 +4,12 @@
 // Supports plain JSON and SSE streaming responses.
 // ============================================
 
+/** "data: " prefix length in Server-Sent Events. */
+const SSE_DATA_PREFIX_LEN = 6;
+
+/** Max characters shown in the "could not parse" error message (so we don't dump megabytes). */
+const PARSE_ERROR_PREVIEW_CHARS = 300;
+
 import { ChatCompletionResponse, ChatMessage, Settings } from "../types";
 
 /** Build the request body for an OpenAI-compatible chat completion. */
@@ -60,7 +66,7 @@ export function parseResponseText(text: string): string {
     if (!trimmed || trimmed === "data: [DONE]") continue;
     if (trimmed.startsWith("data: ")) {
       try {
-        const chunk = JSON.parse(trimmed.slice(6)) as ChatCompletionResponse;
+        const chunk = JSON.parse(trimmed.slice(SSE_DATA_PREFIX_LEN)) as ChatCompletionResponse;
         const choice = chunk.choices?.[0];
         if (choice?.delta?.content) result += choice.delta.content;
         if (choice?.message?.content) result += choice.message.content;
@@ -73,7 +79,7 @@ export function parseResponseText(text: string): string {
   if (result.length > 0) return result;
 
   throw new Error(
-    "Could not parse API response: " + (text || "").substring(0, 300)
+    "Could not parse API response: " + (text || "").substring(0, PARSE_ERROR_PREVIEW_CHARS)
   );
 }
 

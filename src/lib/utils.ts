@@ -4,6 +4,9 @@
 // and clipboard copy with button feedback.
 // ============================================
 
+/** How long (ms) the "Copied!" feedback is shown before the button restores its original label. */
+const COPY_FEEDBACK_MS = 1500;
+
 import { msg } from "./i18n";
 
 /** Escape a string for safe insertion as HTML text. */
@@ -67,7 +70,7 @@ export function copyWithFeedback(
       btnEl.textContent = (label || "\u2713") + copiedMsg;
       setTimeout(() => {
         btnEl.textContent = original;
-      }, 1500);
+      }, COPY_FEEDBACK_MS);
     })
     .catch(() => {
       // ignore clipboard errors

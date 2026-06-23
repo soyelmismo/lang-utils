@@ -25,6 +25,45 @@ if (window.__langUtilsLoaded) {
   void contentMain();
 }
 
+// ============================================
+// UI tunables
+// ============================================
+
+/** Vertical gap (px) between the user's selection and the floating toolbar. */
+const TOOLBAR_OFFSET_PX = 10;
+
+/** Max number of "favorite" modes shown in the floating toolbar (overflow goes into a submenu). */
+const TOOLBAR_MAX_FAVORITES = 4;
+
+/** Min characters of selected text before the floating toolbar appears (avoids showing on every click). */
+const TOOLBAR_MIN_TEXT_CHARS = 3;
+
+/** Delay (ms) after mouseup before positioning the toolbar, so the browser finalizes the selection. */
+const TOOLBAR_POSITION_DELAY_MS = 10;
+
+/** Min characters of text in a field before translate-while-write fires (avoid firing on 1-2 chars). */
+const TRANSLATE_WRITE_MIN_CHARS = 3;
+
+/** Default debounce (ms) for translate-while-write if the user has no saved setting. */
+const TRANSLATE_WRITE_DEFAULT_DEBOUNCE_MS = 1500;
+
+/** Debounce (ms) for form-field click events that decide whether to show the LU indicator. */
+const FORM_CLICK_DEBOUNCE_MS = 200;
+
+/** Safety margin (px) kept between injected UI and the viewport edges, so nothing gets clipped. */
+const VIEWPORT_EDGE_MARGIN_PX = 4;
+
+/** Fixed width and height (px) of the small floating "LU" button next to text fields. */
+const FORM_BTN_WIDTH_PX = 28;
+const FORM_BTN_HEIGHT_PX = 18;
+
+/** Width of the form-mode menu in pixels. */
+const FORM_MENU_WIDTH_PX = 210;
+/** Height (px) per item inside the form-mode menu. */
+const FORM_MENU_ITEM_HEIGHT_PX = 28;
+/** Extra vertical padding (px) inside the form-mode menu. */
+const FORM_MENU_VERTICAL_PADDING_PX = 16;
+
 /** Main entry point for the content script. */
 async function contentMain(): Promise<void> {
   // Apply the user's theme to this page's :root so injected UI matches.
@@ -197,7 +236,7 @@ function showToolbar(x: number, y: number, selectedText: string): void {
   toolbarEl = document.createElement("div");
   toolbarEl.id = "lu-toolbar";
   toolbarEl.style.left = x + "px";
-  toolbarEl.style.top = y + 10 + "px";
+  toolbarEl.style.top = y + TOOLBAR_OFFSET_PX + "px";
 
   // Single modes
   for (const mode of toolbarModes) {
@@ -279,7 +318,7 @@ function setupToolbar(): void {
           .filter(
             (m) => m.type === "single" && m.prompt !== "__CHATBOT__"
           )
-          .slice(0, 4);
+          .slice(0, TOOLBAR_MAX_FAVORITES);
       }
     })
     .catch(() => {
@@ -300,7 +339,7 @@ function setupToolbar(): void {
     setTimeout(() => {
       const sel = window.getSelection();
       const text = sel ? sel.toString().trim() : "";
-      if (text.length < 3) {
+      if (text.length < TOOLBAR_MIN_TEXT_CHARS) {
         removeToolbar();
         return;
       }
@@ -308,7 +347,7 @@ function setupToolbar(): void {
       const range = sel.getRangeAt(0);
       const rect = range.getBoundingClientRect();
       showToolbar(rect.left + window.scrollX, rect.bottom + window.scrollY, text);
-    }, 10);
+    }, TOOLBAR_POSITION_DELAY_MS);
   });
 
   document.addEventListener("mousedown", (e: MouseEvent) => {
@@ -438,16 +477,17 @@ function showFormButton(el: HTMLElement): void {
   formBtn.style.cssText = "position:fixed;z-index:2147483645;";
   document.body.appendChild(formBtn);
 
-  const btnW = 28;
-  const btnH = 18;
-  let top = rect.top - btnH - 4;
-  let left = rect.right - btnW - 4;
+  const btnW = FORM_BTN_WIDTH_PX;
+  const btnH = FORM_BTN_HEIGHT_PX;
+  const edge = VIEWPORT_EDGE_MARGIN_PX;
+  let top = rect.top - btnH - edge;
+  let left = rect.right - btnW - edge;
   const vw = window.innerWidth;
   const vh = window.innerHeight;
-  if (left < 4) left = 4;
-  if (left + btnW > vw - 4) left = vw - btnW - 4;
-  if (top < 4) top = rect.bottom + 4;
-  if (top + btnH > vh - 4) top = vh - btnH - 4;
+  if (left < edge) left = edge;
+  if (left + btnW > vw - edge) left = vw - btnW - edge;
+  if (top < edge) top = rect.bottom + edge;
+  if (top + btnH > vh - edge) top = vh - btnH - edge;
   formBtn.style.top = top + "px";
   formBtn.style.left = left + "px";
 
@@ -591,16 +631,19 @@ function showFormMenu(el: HTMLElement): void {
   }
 
   // Position menu
-  const menuW = 210;
-  const menuH = formMenu.children.length * 28 + 16;
+  const menuW = FORM_MENU_WIDTH_PX;
+  const menuH =
+    formMenu.children.length * FORM_MENU_ITEM_HEIGHT_PX +
+    FORM_MENU_VERTICAL_PADDING_PX;
+  const edge = VIEWPORT_EDGE_MARGIN_PX;
   const vw = window.innerWidth;
   const vh = window.innerHeight;
-  let top = rect.top - menuH - 4;
-  if (top < 4) top = rect.bottom + 4;
-  if (top + menuH > vh - 4) top = vh - menuH - 4;
+  let top = rect.top - menuH - edge;
+  if (top < edge) top = rect.bottom + edge;
+  if (top + menuH > vh - edge) top = vh - menuH - edge;
   let left = rect.right - menuW;
-  if (left < 4) left = 4;
-  if (left + menuW > vw - 4) left = vw - menuW - 4;
+  if (left < edge) left = edge;
+  if (left + menuW > vw - edge) left = vw - menuW - edge;
   formMenu.style.top = top + "px";
   formMenu.style.left = left + "px";
   formMenu.style.visibility = "";
@@ -651,7 +694,7 @@ function twInputHandler(e: Event): void {
     twDebounceTimer = null;
   }
 
-  if (!text.trim() || text.trim().length < 3) return;
+  if (!text.trim() || text.trim().length < TRANSLATE_WRITE_MIN_CHARS) return;
 
   twDebounceTimer = setTimeout(() => {
     void triggerTranslate(el);
@@ -679,7 +722,7 @@ async function triggerTranslate(el: HTMLElement): Promise<void> {
       setFieldValue(el, resp.content);
     }
   } catch (err) {
-    // eslint-disable-next-line no-console
+     
     console.error("[Lang Utils] Translate-write error:", (err as Error).message);
   }
 
@@ -704,7 +747,7 @@ async function loadTWSettings(): Promise<void> {
     })) as { settings?: { targetLang?: string; debounceMs?: number } };
     if (resp && resp.settings) {
       twTargetLang = resp.settings.targetLang || "en";
-      twDebounceMs = resp.settings.debounceMs || 1500;
+      twDebounceMs = resp.settings.debounceMs || TRANSLATE_WRITE_DEFAULT_DEBOUNCE_MS;
     }
   } catch {
     // ignore
@@ -744,7 +787,7 @@ async function processFormMode(
       setFieldValue(el, resp.content);
       showFormUndo(el, fieldOriginal);
     } else {
-      // eslint-disable-next-line no-alert
+       
       alert("Lang Utils error: " + (resp ? resp.error : "Unknown error"));
     }
   } catch (err) {
@@ -752,7 +795,7 @@ async function processFormMode(
       formLoadingEl.remove();
       formLoadingEl = null;
     }
-    // eslint-disable-next-line no-alert
+     
     alert("Lang Utils error: " + (err as Error).message);
   }
 }
@@ -812,7 +855,7 @@ function setupFormInjection(): void {
       if (!target?.closest("#lu-form-btn") && !target?.closest("#lu-form-menu")) {
         removeFormUI();
       }
-    }, 200);
+    }, FORM_CLICK_DEBOUNCE_MS);
   });
 }
 
@@ -935,7 +978,7 @@ function setupMessageHandler(): void {
         }
       }
     } catch (e) {
-      // eslint-disable-next-line no-console
+       
       console.error("[Lang Utils Content] Error handling:", type, e);
     }
     return;

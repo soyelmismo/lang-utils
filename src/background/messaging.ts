@@ -53,6 +53,15 @@ export function log(...args: unknown[]): void {
   console.log("[Lang Utils]", ...args);
 }
 
+/** Max characters of text sent to the LLM for language detection (saves tokens). */
+const DETECTION_TEXT_PREVIEW_CHARS = 500;
+
+/** Skip auto-detection when the text is shorter than this (too ambiguous). */
+const MIN_TEXT_FOR_AUTO_DETECT = 10;
+
+/** Number of characters echoed back from the API test connection (for the user to confirm the model is alive). */
+const API_TEST_ECHO_CHARS = 60;
+
 // ============================================
 //  INIT
 // ============================================
@@ -245,7 +254,7 @@ async function detectLanguage(text: string): Promise<string | null> {
   try {
     const promptText =
       "What language is this text written in? Reply with ONLY the 2-letter ISO 639-1 code (e.g., es, en, fr, de, pt, it, zh, ja, ko, ar, hi, ru, nl, pl, tr). Nothing else.\n\n" +
-      text.substring(0, 500);
+      text.substring(0, DETECTION_TEXT_PREVIEW_CHARS);
     const result = await doAPIFetch(
       buildBody([{ role: "user", content: promptText }], "", settings),
       settings
@@ -280,7 +289,7 @@ export async function processWithAI(
   if (isTranslationMode(modeOpts)) {
     const parts = prompt.split("\n\n");
     const actualText = parts[parts.length - 1] || "";
-    if (actualText.length > 10) {
+    if (actualText.length > MIN_TEXT_FOR_AUTO_DETECT) {
       const detected = await detectLanguage(actualText);
       const targetCode = getTargetLangFromMode(modeOpts);
       if (detected && targetCode && detected === targetCode) {
@@ -682,7 +691,7 @@ export async function onMessage(
       }
       try {
         const text = await testAPIConnection(settings, msg("bg_test_prompt"));
-        return { ok: true, data: (text || "").substring(0, 60) };
+        return { ok: true, data: (text || "").substring(0, API_TEST_ECHO_CHARS) };
       } catch (err) {
         return { ok: false, error: (err as Error).message };
       }

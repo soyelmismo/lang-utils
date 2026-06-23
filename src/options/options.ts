@@ -40,6 +40,33 @@ import type {
   TranslateWriteSettings,
 } from "../types";
 
+// ============================================
+// UI tunables
+// ============================================
+
+/** Default LLM temperature when the user has no saved value (OpenAI's recommended default for chat). */
+const DEFAULT_TEMPERATURE = 0.7;
+
+/** Time (ms) the "Saved" status text stays visible before clearing. */
+const SAVE_STATUS_CLEAR_MS = 3000;
+
+/** Random-id suffix length for newly created modes/groups (avoids collisions; small enough to be human-readable). */
+const RANDOM_ID_SUFFIX_LEN = 7;
+
+/** Base for the random-id suffix (alphanumeric lowercase, 36 = 0-9a-z). */
+const RANDOM_ID_BASE = 36;
+
+/** Max characters of a sub-mode prompt shown in the modes list (rest is "..."). */
+const SUB_MODE_PROMPT_PREVIEW_CHARS = 80;
+
+/** Max characters of a mode prompt shown in the modes list (rest is "..."). */
+const MODE_PROMPT_PREVIEW_CHARS = 120;
+
+/** Defaults + clamps for translate-while-write debounce (ms). */
+const TW_DEFAULT_DEBOUNCE_MS = 1500;
+const TW_MIN_DEBOUNCE_MS = 500;
+const TW_MAX_DEBOUNCE_MS = 5000;
+
 let currentSettings: Settings = {
   apiUrl: "https://api.openai.com/v1",
   apiKey: "",
@@ -48,7 +75,7 @@ let currentSettings: Settings = {
   language: "es",
 };
 let currentModes: AnyMode[] = [];
-let translatingModes: Record<string, boolean> = {};
+const translatingModes: Record<string, boolean> = {};
 
 document.addEventListener("DOMContentLoaded", () => {
   void optionsMain();
@@ -83,7 +110,7 @@ async function loadSettings(): Promise<void> {
   setValue("api-url", currentSettings.apiUrl || "");
   setValue("api-key", currentSettings.apiKey || "");
   setValue("model", currentSettings.model || "");
-  setValue("temperature", String(currentSettings.temperature ?? 0.7));
+  setValue("temperature", String(currentSettings.temperature ?? DEFAULT_TEMPERATURE));
 
   const stored = await browser.storage.local.get(["uiLocale"]);
   const locale = (stored.uiLocale as string) || currentSettings.language || "es";
@@ -103,7 +130,7 @@ function readSettingsForm(): Settings {
     apiUrl: getValue("api-url").trim(),
     apiKey: getValue("api-key").trim(),
     model: getValue("model").trim(),
-    temperature: parseFloat(getValue("temperature")) || 0.7,
+    temperature: parseFloat(getValue("temperature")) || DEFAULT_TEMPERATURE,
     language: getValue("main-language"),
   };
 }
@@ -129,7 +156,7 @@ function setupSettingsForm(): void {
       saveStatus.style.color = "var(--lu-success)";
       setTimeout(() => {
         if (saveStatus) saveStatus.textContent = "";
-      }, 3000);
+      }, SAVE_STATUS_CLEAR_MS);
     }
   });
 
@@ -205,7 +232,8 @@ function setupModeForm(): void {
           await browser.runtime.sendMessage({ type: "update-mode", mode: updated });
         }
       } else {
-        const newId = "group-" + Date.now() + "-" + Math.random().toString(36).slice(2, 7);
+        const newId =
+          "group-" + Date.now() + "-" + Math.random().toString(RANDOM_ID_BASE).slice(2, 2 + RANDOM_ID_SUFFIX_LEN);
         const newGroup: ModeGroup = {
           id: newId,
           name,
@@ -232,7 +260,7 @@ function setupModeForm(): void {
         };
         await browser.runtime.sendMessage({ type: "update-mode", mode: updated });
       } else {
-        const newId = "custom-" + Date.now() + "-" + Math.random().toString(36).slice(2, 7);
+        const newId = "custom-" + Date.now() + "-" + Math.random().toString(RANDOM_ID_BASE).slice(2, 2 + RANDOM_ID_SUFFIX_LEN);
         const newMode: Mode = {
           id: newId,
           name,
@@ -270,7 +298,7 @@ function setupSubModeForm(): void {
         subMode: updated,
       });
     } else {
-      const newSubId = "sub-" + Date.now() + "-" + Math.random().toString(36).slice(2, 7);
+      const newSubId = "sub-" + Date.now() + "-" + Math.random().toString(RANDOM_ID_BASE).slice(2, 2 + RANDOM_ID_SUFFIX_LEN);
       const newSub: SubMode = { id: newSubId, name, prompt, model };
       await browser.runtime.sendMessage({
         type: "add-sub-mode",
@@ -359,7 +387,7 @@ function renderGroupCard(container: HTMLElement, group: ModeGroup): void {
       "</div>" +
       "</div>" +
       '<div class="sub-mode-prompt">' +
-      escapeHtml((sub.prompt || "").substring(0, 80)) +
+      escapeHtml((sub.prompt || "").substring(0, SUB_MODE_PROMPT_PREVIEW_CHARS)) +
       "...</div>" +
       (sub.model
         ? '<span class="mode-badge-model">' + escapeHtml(sub.model) + "</span>"
@@ -425,8 +453,8 @@ function renderModeCard(
   const isTranslated = !!mode._translatedTo;
   const isTranslating = !!translatingModes[mode.id];
   const promptPreview =
-    (mode.prompt || "").length > 120
-      ? (mode.prompt || "").substring(0, 120) + "..."
+    (mode.prompt || "").length > MODE_PROMPT_PREVIEW_CHARS
+      ? (mode.prompt || "").substring(0, MODE_PROMPT_PREVIEW_CHARS) + "..."
       : mode.prompt || "";
 
   const card = document.createElement("div");
@@ -715,7 +743,7 @@ async function loadTWSettings(): Promise<void> {
     })) as { settings?: TranslateWriteSettings };
     if (resp && resp.settings) {
       setValue("tw-target-lang", resp.settings.targetLang || "en");
-      setValue("tw-debounce", String(resp.settings.debounceMs || 1500));
+      setValue("tw-debounce", String(resp.settings.debounceMs || TW_DEFAULT_DEBOUNCE_MS));
     }
   } catch {
     // ignore
@@ -728,12 +756,14 @@ function setupTWSettingsForm(): void {
 
   form?.addEventListener("submit", async (e: SubmitEvent) => {
     e.preventDefault();
-    let settings: TranslateWriteSettings = {
+    const settings: TranslateWriteSettings = {
       targetLang: getValue("tw-target-lang"),
-      debounceMs: parseInt(getValue("tw-debounce")) || 1500,
+      debounceMs: parseInt(getValue("tw-debounce")) || TW_DEFAULT_DEBOUNCE_MS,
     };
-    if (settings.debounceMs < 500) settings.debounceMs = 500;
-    if (settings.debounceMs > 5000) settings.debounceMs = 5000;
+    settings.debounceMs = Math.max(
+      TW_MIN_DEBOUNCE_MS,
+      Math.min(TW_MAX_DEBOUNCE_MS, settings.debounceMs)
+    );
 
     await browser.runtime.sendMessage({
       type: "save-translate-write-settings",
@@ -744,7 +774,7 @@ function setupTWSettingsForm(): void {
       saveStatus.style.color = "var(--lu-success)";
       setTimeout(() => {
         if (saveStatus) saveStatus.textContent = "";
-      }, 3000);
+      }, SAVE_STATUS_CLEAR_MS);
     }
   });
 }

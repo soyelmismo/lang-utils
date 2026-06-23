@@ -57,7 +57,7 @@ async function buildFor(buildTarget) {
 }
 
 /** Copy dist/ to a fresh staging directory and zip it. */
-async function packageFor(buildTarget, archiveName, ext) {
+async function packageFor(buildTarget, archiveName, _ext) {
   const stage = path.join(RELEASES, `stage-${buildTarget}`);
   await fs.rm(stage, { recursive: true, force: true });
   await fs.mkdir(stage, { recursive: true });
@@ -77,10 +77,14 @@ async function packageFor(buildTarget, archiveName, ext) {
   console.log(`  ✓ ${archiveName}  (${formatBytes(stat.size)})`);
 }
 
+/** Byte thresholds for human-readable size formatting. */
+const BYTES_PER_KB = 1024;
+const BYTES_PER_MB = BYTES_PER_KB * BYTES_PER_KB;
+
 function formatBytes(n) {
-  if (n < 1024) return `${n} B`;
-  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
-  return `${(n / (1024 * 1024)).toFixed(2)} MB`;
+  if (n < BYTES_PER_KB) return `${n} B`;
+  if (n < BYTES_PER_MB) return `${(n / BYTES_PER_KB).toFixed(1)} KB`;
+  return `${(n / BYTES_PER_MB).toFixed(2)} MB`;
 }
 
 async function main() {

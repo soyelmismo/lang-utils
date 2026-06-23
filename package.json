@@ -6,6 +6,7 @@
   "scripts": {
     "clean": "rm -rf dist",
     "typecheck": "tsc --noEmit",
+    "lint": "eslint src scripts",
     "build": "node scripts/build.mjs",
     "build:watch": "node scripts/build.mjs --watch",
     "package": "node scripts/package.mjs",
@@ -24,9 +25,13 @@
   ],
   "license": "MIT",
   "devDependencies": {
+    "@eslint/js": "^9.39.4",
     "@types/webextension-polyfill": "^0.12.1",
     "esbuild": "^0.24.0",
+    "eslint": "^9.39.4",
+    "globals": "^15.15.0",
     "typescript": "^5.7.2",
+    "typescript-eslint": "^8.62.0",
     "webextension-polyfill": "^0.12.0"
   }
 }
