@@ -55,7 +55,7 @@ const FORM_CLICK_DEBOUNCE_MS = 200;
 const VIEWPORT_EDGE_MARGIN_PX = 4;
 
 /** Fixed width and height (px) of the small floating "LU" button next to text fields. */
-const FORM_BTN_WIDTH_PX = 28;
+const FORM_BTN_WIDTH_PX = 36;
 const FORM_BTN_HEIGHT_PX = 18;
 
 /** Width of the form-mode menu in pixels. */
@@ -837,7 +837,8 @@ function showFormButton(el: HTMLElement): void {
 
   formBtn = document.createElement("button");
   formBtn.id = "lu-form-btn";
-  formBtn.textContent = "LU";
+  formBtn.title = "Lang Utils — translate this field";
+  formBtn.innerHTML = 'LU<span class="lu-form-arrow" aria-hidden="true">\u25BE</span>';
   formBtn.style.cssText = "position:fixed;z-index:2147483645;";
   document.body.appendChild(formBtn);
 
@@ -1110,12 +1111,28 @@ async function loadTWSettings(): Promise<void> {
       type: "get-translate-write-settings",
     })) as { settings?: { targetLang?: string; debounceMs?: number } };
     if (resp && resp.settings) {
-      twTargetLang = resp.settings.targetLang || "en";
+      twTargetLang = resp.settings.targetLang || currentSettings.favoriteTargetLang || "es";
       twDebounceMs = resp.settings.debounceMs || TRANSLATE_WRITE_DEFAULT_DEBOUNCE_MS;
     }
   } catch {
     // ignore
   }
+}
+
+/** Re-fetch both general settings and translate-write settings from background
+ *  so the content script stays in sync after options-page saves. */
+async function refreshSettings(): Promise<void> {
+  try {
+    const resp = (await browser.runtime.sendMessage({
+      type: "get-settings",
+    })) as { settings?: Partial<Settings> };
+    if (resp && resp.settings) {
+      currentSettings = { ...currentSettings, ...resp.settings };
+    }
+  } catch {
+    // no background yet
+  }
+  await loadTWSettings();
 }
 
 async function processFormMode(
@@ -1323,6 +1340,13 @@ function setupMessageHandler(): void {
           // deletions, edits). Re-fetch and rebuild.
           removeToolbar();
           void refreshToolbarModes();
+          return;
+        }
+
+        case "settings-updated": {
+          // Options/background saved new settings (favoriteTargetLang,
+          // resultPopup, translate-write target/debounce, etc.).
+          void refreshSettings();
           return;
         }
       }

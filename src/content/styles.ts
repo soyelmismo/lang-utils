@@ -243,11 +243,23 @@ export const CONTENT_STYLES = `
   background: var(--lu-bg-panel, #1a1a2e);
   color: var(--lu-accent, #e94560);
   border: 1px solid var(--lu-border-strong, #0f3460);
-  border-radius: 6px; padding: 3px 8px;
+  border-radius: 6px; padding: 3px 18px 3px 8px;
   font: 11px var(--lu-font, -apple-system, sans-serif);
   cursor: pointer; z-index: 2147483645;
   box-shadow: 0 2px 8px rgba(0,0,0,.4);
   transition: all .15s;
+  position: fixed;
+  min-width: 28px;
+  text-align: left;
+}
+#lu-form-btn .lu-form-arrow {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 9px;
+  opacity: .65;
+  pointer-events: none;
 }
 #lu-form-btn:hover { background: var(--lu-accent, #e94560); color: #fff; }
 #lu-form-btn.lu-tw-active {
