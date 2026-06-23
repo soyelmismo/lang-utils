@@ -549,6 +549,8 @@ function showToolbar(x: number, y: number, selectedText: string): void {
         positionMenu(langBtn, langMenu);
         langMenu.classList.add("lu-show");
       }
+      // Directly translate to the current favorite language as well
+      sendModeToAPI(translateMode.id, "", selectedText, langBtn, targetCode);
     });
 
     // JS hover with delay & gap tolerance (replaces CSS :hover)

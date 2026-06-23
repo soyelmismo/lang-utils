@@ -200,7 +200,7 @@ export const CONTENT_STYLES = `
 .lu-tb-lang-btn {
   cursor: pointer;
   position: relative;
-  padding-right: 22px;
+  padding-right: 24px;
 }
 .lu-tb-lang-btn .lu-tb-arrow {
   position: absolute;
