@@ -884,8 +884,9 @@ function showFormMenu(el: HTMLElement): void {
   formMenu.style.visibility = "hidden";
   document.body.appendChild(formMenu);
 
-  // Single modes
+  // Single modes (skip translate-to-favorite — handled by the toolbar)
   for (const mode of toolbarModes) {
+    if (mode.type === "single" && mode.id === "translate-to-favorite") continue;
     const item = document.createElement("div");
     item.className = "lu-fm-item";
     item.textContent = mode.name;
@@ -1132,6 +1133,8 @@ async function refreshSettings(): Promise<void> {
   } catch {
     // no background yet
   }
+  // Re-init i18n so msg() picks up the new locale
+  await i18n.reinit();
   await loadTWSettings();
 }
 

@@ -265,6 +265,16 @@ async function init(): Promise<void> {
   return initPromise;
 }
 
+/** Force a fresh re-init: clears cached locale/messages and re-fetches
+ *  the stored uiLocale. Used when the user changes the main language
+ *  setting in Options so msg() picks up the new locale immediately. */
+export async function reinit(): Promise<void> {
+  initPromise = null;
+  loaded = false;
+  cache = {};
+  await init();
+}
+
 /** Get a translated message by key (synchronous; requires init() to have completed). */
 export function msg(key: MessageKey, substitutions?: string | string[]): string {
   if (loaded && cache[key]) return cache[key];
@@ -362,6 +372,7 @@ async function setLocale(code: string): Promise<void> {
 /** Public i18n API. */
 export const i18n = {
   init,
+  reinit,
   msg,
   langName,
   langOptions,
