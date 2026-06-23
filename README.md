@@ -4,7 +4,7 @@ AI-powered language utilities browser extension: translate, rewrite, summarize, 
 
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue?logo=typescript)
 ![Manifest V3](https://img.shields.io/badge/Manifest-V3-purple)
-![Firefox](https://img.shields.io/badge/Firefox-109%2B-blue?logo=firefox)
+![Firefox](https://img.shields.io/badge/Firefox-142%2B-blue?logo=firefox)
 ![Chrome](https://img.shields.io/badge/Chrome-88%2B-green?logo=googlechrome)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
@@ -78,7 +78,7 @@ Switch language in **Settings → Main language**. The change applies immediatel
 
 - Compatible with any OpenAI-compatible API (`/v1/chat/completions`)
 - Stores your API key locally (never sent to external servers)
-- Works in Firefox 109+ and Chrome 88+
+- Works in Firefox 142+ and Chrome 88+
 
 ---
 
