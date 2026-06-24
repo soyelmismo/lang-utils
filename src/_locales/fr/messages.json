@@ -454,17 +454,5 @@
   },
   "options_themes_import": {
     "message": "Importer le thème"
-  },
-  "options_themes_mode": {
-    "message": "Mode de thème"
-  },
-  "options_themes_mode_auto": {
-    "message": "Automatique (suivre le navigateur)"
-  },
-  "options_themes_mode_manual": {
-    "message": "Manuel"
-  },
-  "options_themes_mode_hint": {
-    "message": "En mode automatique, l'extension bascule entre clair et sombre selon le navigateur et, sur Firefox, hérite de la couleur d'accent de la barre d'outils."
   }
 }

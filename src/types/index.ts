@@ -126,16 +126,7 @@ export interface CustomTheme {
 
 /** All theme-related data stored in storage. */
 export interface ThemeSettings {
-  /** How the active theme is chosen.
-   *  - "auto":   follow the browser/OS color scheme. Light/dark is picked
-   *              at runtime via `prefers-color-scheme`. On Firefox, the
-   *              active browser theme's accent color is also applied to
-   *              --lu-accent dynamically (see src/lib/browser-theme.ts).
-   *  - "manual": user has picked a specific preset/custom theme; browser
-   *              color scheme is ignored.
-   */
-  mode: "auto" | "manual";
-  /** Currently selected theme id (only used when mode === "manual"). */
+  /** Currently selected theme id. */
   current: ThemeId;
   /** User-defined custom theme (used when current === "custom"). */
   custom: CustomTheme;
@@ -219,7 +210,6 @@ export const DEFAULT_TW_SETTINGS: TranslateWriteSettings = {
 
 /** Default theme settings. */
 export const DEFAULT_THEME_SETTINGS: ThemeSettings = {
-  mode: "auto",
   current: "midnight",
   custom: {
     bg: "#0f0f23",

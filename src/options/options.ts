@@ -7,12 +7,9 @@
 import browser from "../lib/browser-compat";
 import { i18n, msg, nativeLangName, langCodes } from "../lib/i18n";
 import {
-  initBrowserThemeSync,
   loadAndApplyTheme,
   PRESET_THEMES,
-  primeBrowserAccent,
   saveAndApplyTheme,
-  subscribeToSystemColorScheme,
   THEME_COLOR_KEYS,
   exportTheme,
   importTheme,
@@ -80,9 +77,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
 async function optionsMain(): Promise<void> {
   await loadAndApplyTheme();
-  await primeBrowserAccent();
-  // Re-apply after priming so the initial paint uses the browser accent.
-  await loadAndApplyTheme();
   await i18n.init();
   i18n.translatePage();
   await loadSettings();
@@ -96,12 +90,6 @@ async function optionsMain(): Promise<void> {
   setupTWSettingsForm();
   setupLanguageSwitcher();
   setupThemeUI();
-  // Subscribe to OS/browser color scheme changes (auto-mode live update).
-  subscribeToSystemColorScheme(() => {
-    void loadAndApplyTheme();
-  });
-  // Subscribe to Firefox browser theme accent changes.
-  initBrowserThemeSync();
 }
 
 // ============================================================
@@ -901,10 +889,6 @@ let currentThemeSettings: ThemeSettings | null = null;
 
 async function loadThemeUI(): Promise<void> {
   currentThemeSettings = await loadAndApplyTheme();
-  const modeSelect = $select("theme-mode-select");
-  if (modeSelect) {
-    modeSelect.value = currentThemeSettings.mode;
-  }
   const select = $select("theme-select");
   if (select) {
     select.value = currentThemeSettings.current;
@@ -913,25 +897,9 @@ async function loadThemeUI(): Promise<void> {
     populateCustomColorInputs(currentThemeSettings.custom);
   }
   updateCustomSectionVisibility();
-  updateThemeModeVisibility();
-}
-
-function updateThemeModeVisibility(): void {
-  const presetGroup = $div("theme-preset-group");
-  if (!presetGroup) return;
-  const isManual = currentThemeSettings?.mode === "manual";
-  presetGroup.style.display = isManual ? "" : "none";
 }
 
 function setupThemeUI(): void {
-  const modeSelect = $select("theme-mode-select");
-  modeSelect?.addEventListener("change", async () => {
-    if (!currentThemeSettings || !modeSelect) return;
-    currentThemeSettings.mode = modeSelect.value as ThemeSettings["mode"];
-    await saveAndApplyTheme(currentThemeSettings);
-    updateThemeModeVisibility();
-  });
-
   const select = $select("theme-select");
   select?.addEventListener("change", async () => {
     if (!currentThemeSettings || !select) return;

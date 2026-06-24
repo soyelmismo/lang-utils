@@ -108,11 +108,6 @@ const EN_MESSAGES: Record<MessageKey, string> = {
   options_themes_apply: "Apply theme",
   options_themes_export: "Export theme",
   options_themes_import: "Import theme",
-  options_themes_mode: "Theme mode",
-  options_themes_mode_auto: "Auto (follow browser)",
-  options_themes_mode_manual: "Manual",
-  options_themes_mode_hint:
-    "In Auto mode, the extension switches between light and dark based on your browser, and on Firefox inherits the toolbar accent color.",
   mode_name: "Mode name",
   mode_name_placeholder: "e.g. Translate to German",
   mode_prompt: "Prompt (AI instruction)",

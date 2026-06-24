@@ -7,12 +7,7 @@
 import browser from "../lib/browser-compat";
 import { i18n, msg } from "../lib/i18n";
 import { copyWithFeedback, markdownToFragmentWithUpgrade } from "../lib/utils";
-import {
-  initBrowserThemeSync,
-  loadAndApplyTheme,
-  primeBrowserAccent,
-  subscribeToSystemColorScheme,
-} from "../lib/themes";
+import { loadAndApplyTheme } from "../lib/themes";
 import { $div, $btn, $textarea } from "../lib/dom";
 import type { ChatMessage, ContentMessage } from "../types";
 
@@ -36,20 +31,12 @@ let loadingEl: HTMLDivElement | null = null;
 /** Initialize on script load. */
 async function chatbotMain(): Promise<void> {
   await loadAndApplyTheme();
-  await primeBrowserAccent();
-  await loadAndApplyTheme();
   await i18n.init();
   i18n.translatePage();
 
   if (contextText) {
     contextText.textContent = selectedText || msg("chatbot_no_text");
   }
-
-  // Live theme sync.
-  subscribeToSystemColorScheme(() => {
-    void loadAndApplyTheme();
-  });
-  initBrowserThemeSync();
 
   conversationHistory.push({
     role: "system",

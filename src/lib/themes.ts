@@ -3,22 +3,11 @@
 // Provides preset themes + a customizable theme
 // (user picks individual colors). All themes are
 // applied via CSS custom properties on :root.
-//
-// In `auto` mode the active preset is chosen from
-// the OS/browser color scheme via `prefers-color-scheme`,
-// and on Firefox the browser theme's accent color
-// is overlaid on top of --lu-accent / --lu-accent-hover.
-// In `manual` mode the user's pick is used verbatim.
 // ============================================
 
 import browser from "./browser-compat";
 import { CustomTheme, DEFAULT_THEME_SETTINGS, ThemeId, ThemeSettings } from "../types";
 import { storage } from "./storage";
-import {
-  BrowserThemeInfo,
-  getCurrentBrowserTheme,
-  subscribeToBrowserTheme,
-} from "./browser-theme";
 
 /** Preset themes shipped with the extension. */
 export const PRESET_THEMES: Record<Exclude<ThemeId, "custom">, CustomTheme> = {
@@ -140,108 +129,21 @@ const CSS_VAR_MAP: Record<keyof CustomTheme, string> = {
   favorite: "--lu-favorite",
 };
 
-/**
- * Pick the dark-mode and light-mode preset ids used when
- * `themeSettings.mode === "auto"`. Users who want a specific
- * dark/light preset can still set mode to "manual".
- */
-const AUTO_DARK_PRESET: Exclude<ThemeId, "custom"> = "midnight";
-const AUTO_LIGHT_PRESET: Exclude<ThemeId, "custom"> = "light";
-
-/** Detects the user's OS/browser color scheme. Defaults to dark. */
-export function detectSystemColorScheme(): "dark" | "light" {
-  if (typeof window === "undefined" || !window.matchMedia) return "dark";
-  return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
-}
-
-/** Module-level cache for the most recent browser accent (Firefox only). */
-let browserAccent: string | null = null;
-
-/**
- * Resolve a ThemeSettings to its actual CustomTheme colors.
- *
- * - `mode === "manual"`: returns the user's chosen preset/custom theme.
- * - `mode === "auto"`:   picks the dark or light preset based on
- *                        `prefers-color-scheme`.
- *
- * The browser accent overlay is NOT applied here — it's added on top
- * by `applyThemeToDocument`.
- */
+/** Resolve a ThemeId to its actual CustomTheme colors. */
 export function resolveTheme(themeSettings: ThemeSettings): CustomTheme {
-  if (themeSettings.mode === "manual") {
-    if (themeSettings.current === "custom") {
-      return { ...DEFAULT_THEME_SETTINGS.custom, ...themeSettings.custom };
-    }
-    return PRESET_THEMES[themeSettings.current] ?? PRESET_THEMES.midnight;
+  if (themeSettings.current === "custom") {
+    return { ...DEFAULT_THEME_SETTINGS.custom, ...themeSettings.custom };
   }
-  // auto mode
-  const presetId = detectSystemColorScheme() === "light"
-    ? AUTO_LIGHT_PRESET
-    : AUTO_DARK_PRESET;
-  return PRESET_THEMES[presetId];
+  return PRESET_THEMES[themeSettings.current] ?? PRESET_THEMES.midnight;
 }
 
-/**
- * Apply a CustomTheme to the document by setting CSS variables on :root.
- * If a browser accent is known (Firefox only), it overrides --lu-accent
- * and --lu-accent-hover so the extension inherits the toolbar color.
- */
+/** Apply a CustomTheme to the document by setting CSS variables on :root. */
 export function applyThemeToDocument(theme: CustomTheme): void {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
   for (const key of THEME_COLOR_KEYS) {
-    // Skip accent keys when a browser accent is active — we override below.
-    if ((key === "accent" || key === "accentHover") && browserAccent) continue;
     root.style.setProperty(CSS_VAR_MAP[key], theme[key]);
   }
-  // Overlay browser accent (Firefox). We set both --lu-accent and
-  // --lu-accent-hover to the same color since we can't derive a darker
-  // hover tint generically. Consumers that want a richer hover can
-  // extend this with a luminance-based adjustment.
-  if (browserAccent) {
-    root.style.setProperty(CSS_VAR_MAP.accent, browserAccent);
-    root.style.setProperty(CSS_VAR_MAP.accentHover, browserAccent);
-  }
-}
-
-/**
- * Apply an incoming browser theme update. Called from the subscription
- * registered via `initBrowserThemeSync`. No-op on browsers without
- * `browser.theme` (Chrome) or when no accent is provided.
- */
-function applyBrowserTheme(info: BrowserThemeInfo): void {
-  const next = info.accent ? info.accent : null;
-  if (next === browserAccent) return;
-  browserAccent = next;
-  // Re-apply the currently-resolved theme so the new accent (or its
-  // removal) takes effect on :root. We don't await storage here —
-  // the current theme settings are already in memory.
-  void storage.getThemeSettings().then((s) => {
-    applyThemeToDocument(resolveTheme(s));
-  });
-}
-
-/**
- * Subscribe to browser theme changes (Firefox only) and overlay the
- * accent color onto --lu-accent. Returns an unsubscribe fn; on Chrome
- * (no browser.theme) returns a no-op unsubscribe.
- *
- * Intended to be called once per page from each entry point that
- * needs the overlay (background, popup, options, chatbot, content).
- * Idempotent: safe to call multiple times — but typically you only
- * need one place per page.
- */
-export function initBrowserThemeSync(): () => void {
-  return subscribeToBrowserTheme(applyBrowserTheme);
-}
-
-/**
- * Read the current browser theme (Firefox only). Returns null on Chrome.
- * Used at startup so the first paint already has the browser accent.
- */
-export async function primeBrowserAccent(): Promise<void> {
-  const info = await getCurrentBrowserTheme();
-  if (info?.accent) browserAccent = info.accent;
 }
 
 /** Load theme settings from storage and apply them. */
@@ -263,29 +165,6 @@ export async function saveAndApplyTheme(themeSettings: ThemeSettings): Promise<v
   } catch {
     // ignore
   }
-}
-
-/**
- * Subscribe to changes in `prefers-color-scheme` (when the user toggles
- * dark mode in the OS / browser settings) and re-apply the current
- * theme. Returns an unsubscribe fn.
- *
- * Only has a visible effect when `themeSettings.mode === "auto"` —
- * manual themes ignore the system color scheme.
- */
-export function subscribeToSystemColorScheme(
-  callback: () => void,
-): () => void {
-  if (typeof window === "undefined" || !window.matchMedia) return () => {};
-  const mql = window.matchMedia("(prefers-color-scheme: dark)");
-  const handler = (): void => callback();
-  // Newer browsers: addEventListener; older Safari: addListener.
-  if (typeof mql.addEventListener === "function") {
-    mql.addEventListener("change", handler);
-    return () => mql.removeEventListener("change", handler);
-  }
-  mql.addListener(handler);
-  return () => mql.removeListener(handler);
 }
 
 /** Convert a theme to a JSON string for export. */
