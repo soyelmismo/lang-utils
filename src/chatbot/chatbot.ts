@@ -6,7 +6,7 @@
 
 import browser from "../lib/browser-compat";
 import { i18n, msg } from "../lib/i18n";
-import { markdownToFragment, copyWithFeedback } from "../lib/utils";
+import { copyWithFeedback, markdownToFragmentWithUpgrade } from "../lib/utils";
 import { loadAndApplyTheme } from "../lib/themes";
 import { $div, $btn, $textarea } from "../lib/dom";
 import type { ChatMessage, ContentMessage } from "../types";
@@ -133,7 +133,14 @@ function addMessage(type: MessageType, content: string): void {
   if (type === "ai") {
     // Render trusted markdown from our own AI response. If the response ever
     // could include user-influenced HTML, switch to DOMPurify.
-    contentDiv.appendChild(markdownToFragment(content));
+    // The renderer is lazy-loaded on first AI message; until it finishes,
+    // we show the raw markdown as plain text in a placeholder element and
+    // upgrade it to rendered HTML once the bundle is ready.
+    const placeholder = document.createElement("div");
+    placeholder.className = "lu-markdown-loading";
+    placeholder.textContent = content;
+    contentDiv.appendChild(placeholder);
+    void markdownToFragmentWithUpgrade(content, placeholder);
   } else {
     contentDiv.textContent = content;
   }

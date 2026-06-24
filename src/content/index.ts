@@ -7,7 +7,7 @@
 
 import browser from "../lib/browser-compat";
 import { i18n, msg, nativeLangName, langFlag, langCodes } from "../lib/i18n";
-import { markdownToFragment, copyWithFeedback } from "../lib/utils";
+import { copyWithFeedback, markdownToFragmentWithUpgrade } from "../lib/utils";
 import { loadAndApplyTheme } from "../lib/themes";
 import { CONTENT_STYLES } from "./styles";
 import type { AnyMode, Mode, ModeGroup, Settings } from "../types";
@@ -439,13 +439,20 @@ function sendModeToAPI(
       const r = resp as { ok?: boolean; content?: string; error?: string };
       removeToolbar();
       if (r && r.ok && r.content) {
+        // markdownToFragment is async (lazy-loaded). Show the raw text in a
+        // placeholder immediately so the popup/panel appears without delay,
+        // then upgrade to rendered HTML once the bundle is ready.
+        const placeholder = document.createElement("div");
+        placeholder.className = "lu-markdown-loading";
+        placeholder.textContent = r.content;
         if (currentSettings.resultPopup) {
-          createPopup(msg("content_result"), markdownToFragment(r.content), {
+          createPopup(msg("content_result"), placeholder, {
             copyText: r.content,
           });
         } else {
-          createPanel(msg("content_result"), markdownToFragment(r.content));
+          createPanel(msg("content_result"), placeholder);
         }
+        void markdownToFragmentWithUpgrade(r.content, placeholder);
       } else {
         const errMsg = r ? r.error || "Unknown error" : "Unknown error";
         const errorDiv = document.createElement("div");
@@ -1368,11 +1375,16 @@ function setupMessageHandler(): void {
         case "show-result": {
           const title = String(message.title || "");
           const content = String(message.content || "");
-          const fragment = markdownToFragment(content);
+          // markdownToFragment is async (lazy-loaded). Use a placeholder
+          // element so the panel/popup appears immediately, then upgrade
+          // to rendered HTML once the bundle is ready.
+          const placeholder = document.createElement("div");
+          placeholder.className = "lu-markdown-loading";
+          placeholder.textContent = content;
           if (currentSettings.resultPopup) {
-            createPopup(title, fragment, { copyText: content });
+            createPopup(title, placeholder, { copyText: content });
+            void markdownToFragmentWithUpgrade(content, placeholder);
           } else {
-            const fragment2 = markdownToFragment(content);
             const actionsBar = document.createElement("div");
             actionsBar.className = "lu-actions-bar";
             const copyFullBtn = document.createElement("button");
@@ -1380,7 +1392,7 @@ function setupMessageHandler(): void {
             copyFullBtn.id = "lu-copy-full";
             copyFullBtn.textContent = msg("content_copy_all");
             actionsBar.appendChild(copyFullBtn);
-            createPanel(title, fragment2, { actions: actionsBar });
+            createPanel(title, placeholder, { actions: actionsBar });
             copyFullBtn.addEventListener("click", () => {
               copyWithFeedback(
                 content,
@@ -1388,6 +1400,7 @@ function setupMessageHandler(): void {
                 msg("content_copy_all")
               );
             });
+            void markdownToFragmentWithUpgrade(content, placeholder);
           }
           return;
         }

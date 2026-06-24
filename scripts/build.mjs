@@ -139,6 +139,11 @@ const ENTRY_POINTS = [
   { in: path.join(SRC, "popup", "popup.ts"), out: "popup/popup" },
   { in: path.join(SRC, "options", "options.ts"), out: "options/options" },
   { in: path.join(SRC, "chatbot", "chatbot.ts"), out: "chatbot/chatbot" },
+  // Separate bundle for marked + dompurify. Loaded on demand from the
+  // content script and the chatbot via a <script> tag pointing at
+  // chrome.runtime.getURL("markdown.js"), so it does NOT ship on every
+  // page where the extension is injected.
+  { in: path.join(SRC, "lib", "markdown.ts"), out: "markdown" },
 ];
 
 const commonOptions = {

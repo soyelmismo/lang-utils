@@ -336,3 +336,95 @@ body {
   font-family: 'Monaco', 'Menlo', monospace;
   font-size: 13px;
 }
+
+/* Inline code inside messages (not in <pre>) */
+.ai-message :not(pre) > code {
+  background: var(--lu-bg);
+  border: 1px solid var(--lu-border);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+/* GFM Tables */
+.ai-message table {
+  border-collapse: collapse;
+  margin: 8px 0;
+  width: 100%;
+  font-size: 13px;
+  border: 1px solid var(--lu-border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.ai-message thead {
+  background: var(--lu-border);
+}
+
+.ai-message th,
+.ai-message td {
+  padding: 8px 12px;
+  border: 1px solid var(--lu-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.ai-message th {
+  font-weight: 600;
+  color: var(--lu-accent);
+}
+
+.ai-message tbody tr:nth-child(even) {
+  background: var(--lu-bg-panel);
+}
+
+/* Blockquotes */
+.ai-message blockquote {
+  margin: 8px 0;
+  padding: 8px 12px;
+  border-left: 3px solid var(--lu-accent);
+  background: var(--lu-bg-panel);
+  color: var(--lu-text-muted);
+  border-radius: 0 4px 4px 0;
+}
+
+.ai-message blockquote p {
+  margin: 0;
+}
+
+/* Links */
+.ai-message a {
+  color: var(--lu-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.ai-message a:hover {
+  color: var(--lu-accent-hover);
+}
+
+/* Horizontal rule */
+.ai-message hr {
+  border: none;
+  border-top: 1px solid var(--lu-border);
+  margin: 12px 0;
+}
+
+/* Strikethrough / sub / sup */
+.ai-message del {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+.ai-message sub,
+.ai-message sup {
+  font-size: 0.75em;
+}
+
+/* Nested lists */
+.ai-message ul ul,
+.ai-message ol ol,
+.ai-message ul ol,
+.ai-message ol ul {
+  margin: 4px 0 4px 16px;
+}

@@ -54,6 +54,7 @@
         "popup/*",
         "options/*",
         "chatbot/*",
+        "markdown.js",
         "styles/themes.css",
         "_locales/*"
       ],
