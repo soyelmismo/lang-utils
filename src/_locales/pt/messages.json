@@ -454,5 +454,17 @@
   },
   "options_themes_import": {
     "message": "Importar tema"
+  },
+  "options_themes_mode": {
+    "message": "Modo de tema"
+  },
+  "options_themes_mode_auto": {
+    "message": "Automático (seguir navegador)"
+  },
+  "options_themes_mode_manual": {
+    "message": "Manual"
+  },
+  "options_themes_mode_hint": {
+    "message": "No modo automático, a extensão alterna entre claro e escuro conforme o navegador e, no Firefox, herda a cor de destaque da barra de ferramentas."
   }
 }

@@ -454,5 +454,17 @@
   },
   "options_themes_import": {
     "message": "Import theme"
+  },
+  "options_themes_mode": {
+    "message": "Theme mode"
+  },
+  "options_themes_mode_auto": {
+    "message": "Auto (follow browser)"
+  },
+  "options_themes_mode_manual": {
+    "message": "Manual"
+  },
+  "options_themes_mode_hint": {
+    "message": "In Auto mode, the extension switches between light and dark based on your browser, and on Firefox inherits the toolbar accent color."
   }
 }

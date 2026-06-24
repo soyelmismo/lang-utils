@@ -8,7 +8,12 @@
 import browser from "../lib/browser-compat";
 import { i18n, msg, nativeLangName, langFlag, langCodes } from "../lib/i18n";
 import { copyWithFeedback, markdownToFragmentWithUpgrade } from "../lib/utils";
-import { loadAndApplyTheme } from "../lib/themes";
+import {
+  initBrowserThemeSync,
+  loadAndApplyTheme,
+  primeBrowserAccent,
+  subscribeToSystemColorScheme,
+} from "../lib/themes";
 import { CONTENT_STYLES } from "./styles";
 import type { AnyMode, Mode, ModeGroup, Settings } from "../types";
 import { DEFAULT_SETTINGS } from "../types";
@@ -91,6 +96,9 @@ async function contentMain(): Promise<void> {
 
   // Apply the user's theme to this page's :root so injected UI matches.
   await loadAndApplyTheme();
+  // Prime the browser accent (Firefox) so the first paint already uses it.
+  await primeBrowserAccent();
+  await loadAndApplyTheme();
   await i18n.init();
 
   // Load current settings (so we can honor resultPopup preference, etc.)
@@ -117,6 +125,12 @@ async function contentMain(): Promise<void> {
   setupToolbar();
   setupFormInjection();
   setupMessageHandler();
+
+  // Live theme sync.
+  subscribeToSystemColorScheme(() => {
+    void loadAndApplyTheme();
+  });
+  initBrowserThemeSync();
 }
 
 // ============================================================

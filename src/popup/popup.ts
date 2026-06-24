@@ -8,7 +8,12 @@ const POPUP_BLUR_CLOSE_DELAY_MS = 150;
 
 import browser from "../lib/browser-compat";
 import { i18n, msg } from "../lib/i18n";
-import { loadAndApplyTheme } from "../lib/themes";
+import {
+  initBrowserThemeSync,
+  loadAndApplyTheme,
+  primeBrowserAccent,
+  subscribeToSystemColorScheme,
+} from "../lib/themes";
 import { $, $span, $div, $btn } from "../lib/dom";
 import type { AnyMode, Settings } from "../types";
 
@@ -17,6 +22,8 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 async function popupMain(): Promise<void> {
+  await loadAndApplyTheme();
+  await primeBrowserAccent();
   await loadAndApplyTheme();
   await i18n.init();
   i18n.translatePage();
@@ -30,6 +37,12 @@ async function popupMain(): Promise<void> {
       window.close();
     }, POPUP_BLUR_CLOSE_DELAY_MS);
   });
+
+  // Live theme sync while popup is open.
+  subscribeToSystemColorScheme(() => {
+    void loadAndApplyTheme();
+  });
+  initBrowserThemeSync();
 }
 
 async function checkAPIStatus(): Promise<void> {

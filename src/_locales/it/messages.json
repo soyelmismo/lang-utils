@@ -454,5 +454,17 @@
   },
   "options_themes_import": {
     "message": "Importa tema"
+  },
+  "options_themes_mode": {
+    "message": "Modalità tema"
+  },
+  "options_themes_mode_auto": {
+    "message": "Automatica (segui browser)"
+  },
+  "options_themes_mode_manual": {
+    "message": "Manuale"
+  },
+  "options_themes_mode_hint": {
+    "message": "In modalità automatica, l'estensione passa tra chiaro e scuro in base al browser e, su Firefox, eredita il colore di accento della barra degli strumenti."
   }
 }
