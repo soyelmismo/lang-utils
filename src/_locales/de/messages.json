@@ -454,5 +454,17 @@
   },
   "options_themes_import": {
     "message": "Design importieren"
+  },
+  "options_themes_mode": {
+    "message": "Design-Modus"
+  },
+  "options_themes_mode_auto": {
+    "message": "Automatisch (Browser folgen)"
+  },
+  "options_themes_mode_manual": {
+    "message": "Manuell"
+  },
+  "options_themes_mode_hint": {
+    "message": "Im automatischen Modus wechselt die Erweiterung je nach Browser zwischen hell und dunkel."
   }
 }

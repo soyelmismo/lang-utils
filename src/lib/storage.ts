@@ -62,6 +62,7 @@ export const storage = {
   async getThemeSettings(): Promise<ThemeSettings> {
     const stored = (await this.get<Partial<ThemeSettings>>("themeSettings")) || {};
     return {
+      mode: stored.mode ?? DEFAULT_THEME_SETTINGS.mode,
       current: stored.current ?? DEFAULT_THEME_SETTINGS.current,
       custom: { ...DEFAULT_THEME_SETTINGS.custom, ...(stored.custom ?? {}) },
     };

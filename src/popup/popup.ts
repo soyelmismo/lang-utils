@@ -8,7 +8,7 @@ const POPUP_BLUR_CLOSE_DELAY_MS = 150;
 
 import browser from "../lib/browser-compat";
 import { i18n, msg } from "../lib/i18n";
-import { loadAndApplyTheme } from "../lib/themes";
+import { loadAndApplyTheme, subscribeToSystemColorScheme } from "../lib/themes";
 import { $, $span, $div, $btn } from "../lib/dom";
 import type { AnyMode, Settings } from "../types";
 
@@ -29,6 +29,12 @@ async function popupMain(): Promise<void> {
     setTimeout(() => {
       window.close();
     }, POPUP_BLUR_CLOSE_DELAY_MS);
+  });
+
+  // Live OS color-scheme sync while the popup is open. Only effective
+  // when mode === "auto".
+  subscribeToSystemColorScheme(() => {
+    void loadAndApplyTheme();
   });
 }
 

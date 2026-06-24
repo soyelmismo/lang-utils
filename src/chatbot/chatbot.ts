@@ -7,7 +7,7 @@
 import browser from "../lib/browser-compat";
 import { i18n, msg } from "../lib/i18n";
 import { copyWithFeedback, markdownToFragmentWithUpgrade } from "../lib/utils";
-import { loadAndApplyTheme } from "../lib/themes";
+import { loadAndApplyTheme, subscribeToSystemColorScheme } from "../lib/themes";
 import { $div, $btn, $textarea } from "../lib/dom";
 import type { ChatMessage, ContentMessage } from "../types";
 
@@ -37,6 +37,11 @@ async function chatbotMain(): Promise<void> {
   if (contextText) {
     contextText.textContent = selectedText || msg("chatbot_no_text");
   }
+
+  // Live OS color-scheme sync. Only effective when mode === "auto".
+  subscribeToSystemColorScheme(() => {
+    void loadAndApplyTheme();
+  });
 
   conversationHistory.push({
     role: "system",

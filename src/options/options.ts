@@ -10,6 +10,7 @@ import {
   loadAndApplyTheme,
   PRESET_THEMES,
   saveAndApplyTheme,
+  subscribeToSystemColorScheme,
   THEME_COLOR_KEYS,
   exportTheme,
   importTheme,
@@ -90,6 +91,10 @@ async function optionsMain(): Promise<void> {
   setupTWSettingsForm();
   setupLanguageSwitcher();
   setupThemeUI();
+  // Live OS color-scheme sync. Only effective when mode === "auto".
+  subscribeToSystemColorScheme(() => {
+    void loadAndApplyTheme();
+  });
 }
 
 // ============================================================
@@ -889,6 +894,10 @@ let currentThemeSettings: ThemeSettings | null = null;
 
 async function loadThemeUI(): Promise<void> {
   currentThemeSettings = await loadAndApplyTheme();
+  const modeSelect = $select("theme-mode-select");
+  if (modeSelect) {
+    modeSelect.value = currentThemeSettings.mode;
+  }
   const select = $select("theme-select");
   if (select) {
     select.value = currentThemeSettings.current;
@@ -897,9 +906,25 @@ async function loadThemeUI(): Promise<void> {
     populateCustomColorInputs(currentThemeSettings.custom);
   }
   updateCustomSectionVisibility();
+  updateThemeModeVisibility();
+}
+
+function updateThemeModeVisibility(): void {
+  const presetGroup = $div("theme-preset-group");
+  if (!presetGroup) return;
+  const isManual = currentThemeSettings?.mode === "manual";
+  presetGroup.style.display = isManual ? "" : "none";
 }
 
 function setupThemeUI(): void {
+  const modeSelect = $select("theme-mode-select");
+  modeSelect?.addEventListener("change", async () => {
+    if (!currentThemeSettings || !modeSelect) return;
+    currentThemeSettings.mode = modeSelect.value as ThemeSettings["mode"];
+    await saveAndApplyTheme(currentThemeSettings);
+    updateThemeModeVisibility();
+  });
+
   const select = $select("theme-select");
   select?.addEventListener("change", async () => {
     if (!currentThemeSettings || !select) return;

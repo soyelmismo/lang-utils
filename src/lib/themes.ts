@@ -3,6 +3,10 @@
 // Provides preset themes + a customizable theme
 // (user picks individual colors). All themes are
 // applied via CSS custom properties on :root.
+//
+// In `auto` mode the active preset is chosen from
+// the OS/browser color scheme via `prefers-color-scheme`.
+// In `manual` mode the user's pick is used verbatim.
 // ============================================
 
 import browser from "./browser-compat";
@@ -129,12 +133,38 @@ const CSS_VAR_MAP: Record<keyof CustomTheme, string> = {
   favorite: "--lu-favorite",
 };
 
-/** Resolve a ThemeId to its actual CustomTheme colors. */
+/**
+ * Pick the dark-mode and light-mode preset ids used when
+ * `themeSettings.mode === "auto"`. Users who want a specific
+ * dark/light preset can still set mode to "manual".
+ */
+const AUTO_DARK_PRESET: Exclude<ThemeId, "custom"> = "midnight";
+const AUTO_LIGHT_PRESET: Exclude<ThemeId, "custom"> = "light";
+
+/** Detects the user's OS/browser color scheme. Defaults to dark. */
+export function detectSystemColorScheme(): "dark" | "light" {
+  if (typeof window === "undefined" || !window.matchMedia) return "dark";
+  return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+}
+
+/**
+ * Resolve a ThemeSettings to its actual CustomTheme colors.
+ *
+ * - `mode === "manual"`: returns the user's chosen preset/custom theme.
+ * - `mode === "auto"`:   picks the dark or light preset based on
+ *                        `prefers-color-scheme`.
+ */
 export function resolveTheme(themeSettings: ThemeSettings): CustomTheme {
-  if (themeSettings.current === "custom") {
-    return { ...DEFAULT_THEME_SETTINGS.custom, ...themeSettings.custom };
+  if (themeSettings.mode === "manual") {
+    if (themeSettings.current === "custom") {
+      return { ...DEFAULT_THEME_SETTINGS.custom, ...themeSettings.custom };
+    }
+    return PRESET_THEMES[themeSettings.current] ?? PRESET_THEMES.midnight;
   }
-  return PRESET_THEMES[themeSettings.current] ?? PRESET_THEMES.midnight;
+  // auto mode: pick dark/light preset based on the OS color scheme.
+  const presetId =
+    detectSystemColorScheme() === "light" ? AUTO_LIGHT_PRESET : AUTO_DARK_PRESET;
+  return PRESET_THEMES[presetId];
 }
 
 /** Apply a CustomTheme to the document by setting CSS variables on :root. */
@@ -187,4 +217,26 @@ export function importTheme(json: string): CustomTheme | null {
   } catch {
     return null;
   }
+}
+
+/**
+ * Subscribe to changes in `prefers-color-scheme` (when the user toggles
+ * dark mode in the OS / browser settings). The callback is invoked with
+ * no arguments; the caller is expected to re-read the current settings
+ * and re-apply the theme. Returns an unsubscribe fn.
+ *
+ * Only has a visible effect when `themeSettings.mode === "auto"` —
+ * manual themes ignore the system color scheme.
+ */
+export function subscribeToSystemColorScheme(callback: () => void): () => void {
+  if (typeof window === "undefined" || !window.matchMedia) return () => {};
+  const mql = window.matchMedia("(prefers-color-scheme: dark)");
+  const handler = (): void => callback();
+  // Newer browsers: addEventListener; older Safari: addListener.
+  if (typeof mql.addEventListener === "function") {
+    mql.addEventListener("change", handler);
+    return () => mql.removeEventListener("change", handler);
+  }
+  mql.addListener(handler);
+  return () => mql.removeListener(handler);
 }

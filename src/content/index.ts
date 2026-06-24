@@ -8,7 +8,7 @@
 import browser from "../lib/browser-compat";
 import { i18n, msg, nativeLangName, langFlag, langCodes } from "../lib/i18n";
 import { copyWithFeedback, markdownToFragmentWithUpgrade } from "../lib/utils";
-import { loadAndApplyTheme } from "../lib/themes";
+import { loadAndApplyTheme, subscribeToSystemColorScheme } from "../lib/themes";
 import { CONTENT_STYLES } from "./styles";
 import type { AnyMode, Mode, ModeGroup, Settings } from "../types";
 import { DEFAULT_SETTINGS } from "../types";
@@ -117,6 +117,11 @@ async function contentMain(): Promise<void> {
   setupToolbar();
   setupFormInjection();
   setupMessageHandler();
+
+  // Live OS color-scheme sync. Only effective when mode === "auto".
+  subscribeToSystemColorScheme(() => {
+    void loadAndApplyTheme();
+  });
 }
 
 // ============================================================
