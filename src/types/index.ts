@@ -175,6 +175,7 @@ export type BackgroundMessage =
   | { type: "get-translate-write-settings" }
   | { type: "save-translate-write-settings"; settings: TranslateWriteSettings }
   | { type: "translate-write"; text: string; targetLang: string; sourceLang: string }
+  | { type: "inject-markdown" }
   | { type: "cleanup-ui" };
 
 /** Messages sent from background → content script. */

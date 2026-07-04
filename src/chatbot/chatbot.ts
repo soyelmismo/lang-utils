@@ -143,7 +143,7 @@ function addMessage(type: MessageType, content: string): void {
     // upgrade it to rendered HTML once the bundle is ready.
     const placeholder = document.createElement("div");
     placeholder.className = "lu-markdown-loading";
-    placeholder.textContent = content;
+    placeholder.textContent = content.replace(/\\n/g, "\n");
     contentDiv.appendChild(placeholder);
     void markdownToFragmentWithUpgrade(content, placeholder);
   } else {

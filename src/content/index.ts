@@ -449,7 +449,7 @@ function sendModeToAPI(
         // then upgrade to rendered HTML once the bundle is ready.
         const placeholder = document.createElement("div");
         placeholder.className = "lu-markdown-loading";
-        placeholder.textContent = r.content;
+        placeholder.textContent = r.content.replace(/\\n/g, "\n");
         if (currentSettings.resultPopup) {
           createPopup(msg("content_result"), placeholder, {
             copyText: r.content,
@@ -1385,7 +1385,7 @@ function setupMessageHandler(): void {
           // to rendered HTML once the bundle is ready.
           const placeholder = document.createElement("div");
           placeholder.className = "lu-markdown-loading";
-          placeholder.textContent = content;
+          placeholder.textContent = content.replace(/\\n/g, "\n");
           if (currentSettings.resultPopup) {
             createPopup(title, placeholder, { copyText: content });
             void markdownToFragmentWithUpgrade(content, placeholder);

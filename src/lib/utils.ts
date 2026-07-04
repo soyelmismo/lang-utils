@@ -22,6 +22,7 @@
 const COPY_FEEDBACK_MS = 1500;
 
 import { msg } from "./i18n";
+import browser from "./browser-compat";
 
 /** Symbol used by the lazy bundle to register its API on globalThis. Must stay in sync with `src/lib/markdown.ts`. */
 const MARKDOWN_API_SYMBOL = Symbol.for("lang-utils.markdown");
@@ -50,24 +51,21 @@ let loaderPromise: Promise<MarkdownApi | null> | null = null;
  */
 function plainTextFragment(md: string): DocumentFragment {
   const frag = document.createDocumentFragment();
-  const pre = document.createElement("pre");
-  pre.className = "lu-markdown-loading";
-  pre.textContent = md;
-  frag.appendChild(pre);
+  const div = document.createElement("div");
+  div.className = "lu-markdown-loading";
+  div.style.whiteSpace = "pre-wrap";
+  div.textContent = md.replace(/\\n/g, "\n");
+  frag.appendChild(div);
   return frag;
 }
 
 /**
- * Inject `dist/markdown.js` as a <script> tag and resolve when it has
+ * Inject `dist/markdown.js` and resolve when it has
  * registered the markdown API on `globalThis[MARKDOWN_API_SYMBOL]`.
  *
- * The script is served via `chrome.runtime.getURL()` from inside the
- * extension package, so we need the file to be listed in
- * `web_accessible_resources` in the manifest (it is).
- *
- * If the page's CSP blocks the script, or `chrome.runtime` is unavailable
- * (e.g. running outside an extension context), we resolve to `null` and the
- * caller falls back to the plain-text placeholder.
+ * If we are running in an extension page (e.g. chatbot, popup), we inject it as a <script> tag.
+ * If we are running as a content script (isolated world), we ask the background script
+ * to execute it in our isolated world via `browser.scripting.executeScript`.
  */
 function loadMarkdownBundle(): Promise<MarkdownApi | null> {
   if (loaderPromise) return loaderPromise;
@@ -88,18 +86,6 @@ function loadMarkdownBundle(): Promise<MarkdownApi | null> {
       return;
     }
 
-    const url = getUrl("markdown.js");
-
-    const script = document.createElement("script");
-    script.src = url;
-    script.async = true;
-    script.dataset["langUtils"] = "markdown";
-
-    // Resolve as soon as the bundle registers its API. We poll instead of
-    // using `script.onload` because `onload` fires when the script is
-    // fetched+parsed but the global registration happens in the IIFE body
-    // — in practice both happen in the same microtask after onload, but
-    // polling a few frames is cheap and avoids edge cases with code splitting.
     let resolved = false;
     const finish = (api: MarkdownApi | null) => {
       if (resolved) return;
@@ -126,16 +112,43 @@ function loadMarkdownBundle(): Promise<MarkdownApi | null> {
       requestAnimationFrame(poll);
     };
 
-    script.onerror = () => {
-      console.warn("[Lang Utils] failed to load markdown.js");
-      finish(null);
-    };
+    const isExtensionPage =
+      typeof window !== "undefined" &&
+      window.location &&
+      window.location.protocol === "chrome-extension:";
 
-    // Attach to <html> (always exists, even before <head> in some cases).
-    (document.head || document.documentElement).appendChild(script);
+    if (isExtensionPage) {
+      const url = getUrl("markdown.js");
+      const script = document.createElement("script");
+      script.src = url;
+      script.async = true;
+      script.dataset["langUtils"] = "markdown";
 
-    // Start polling.
-    requestAnimationFrame(poll);
+      script.onerror = () => {
+        console.warn("[Lang Utils] failed to load markdown.js");
+        finish(null);
+      };
+
+      (document.head || document.documentElement).appendChild(script);
+      requestAnimationFrame(poll);
+    } else {
+      // Content script (isolated world): request background script to run markdown.js
+      browser.runtime
+        .sendMessage({ type: "inject-markdown" })
+        .then((resp: unknown) => {
+          const r = resp as { ok?: boolean; error?: string } | undefined;
+          if (r && r.ok) {
+            requestAnimationFrame(poll);
+          } else {
+            console.warn("[Lang Utils] failed to request markdown.js injection:", r?.error);
+            finish(null);
+          }
+        })
+        .catch((err: Error) => {
+          console.warn("[Lang Utils] message error requesting markdown.js:", err.message);
+          finish(null);
+        });
+    }
   });
 
   return loaderPromise;

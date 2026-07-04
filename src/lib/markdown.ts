@@ -35,9 +35,12 @@ export const MARKDOWN_API_SYMBOL = Symbol.for("lang-utils.markdown");
 export function markdownToFragment(md: string | null | undefined): DocumentFragment {
   if (!md) return document.createDocumentFragment();
 
+  // Replace literal '\n' sequences with real newlines.
+  const cleanMd = md.replace(/\\n/g, "\n");
+
   // GFM features (tables, strikethrough, task lists) + line breaks like the
   // previous custom parser did.
-  const rawHtml = marked.parse(md, {
+  const rawHtml = marked.parse(cleanMd, {
     gfm: true,
     breaks: true,
     async: false,

@@ -812,6 +812,23 @@ export async function onMessage(
         message.sourceLang
       );
 
+    case "inject-markdown": {
+      const tabId = sender.tab?.id;
+      if (tabId !== undefined) {
+        try {
+          await browser.scripting.executeScript({
+            target: { tabId },
+            files: ["markdown.js"],
+          });
+          return { ok: true };
+        } catch (err) {
+          log("executeScript markdown.js failed:", (err as Error).message);
+          return { ok: false, error: (err as Error).message };
+        }
+      }
+      return { ok: false, error: "No tab ID" };
+    }
+
     default:
       return { ok: false, error: "Unknown message type" };
   }
