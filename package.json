@@ -31,7 +31,9 @@
     "esbuild": "^0.24.0",
     "eslint": "^9.39.4",
     "globals": "^15.15.0",
-    "typescript": "^5.7.2",
+    "jsdom": "^29.1.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3",
     "typescript-eslint": "^8.62.0",
     "webextension-polyfill": "^0.12.0"
   },
