@@ -13,7 +13,8 @@
     "package": "node scripts/ensure-deps.mjs && node scripts/package.mjs",
     "package:chrome": "node scripts/ensure-deps.mjs && node scripts/package.mjs --target=chrome",
     "package:firefox": "node scripts/ensure-deps.mjs && node scripts/package.mjs --target=firefox",
-    "package:no-build": "node scripts/ensure-deps.mjs && node scripts/package.mjs --no-build"
+    "package:no-build": "node scripts/ensure-deps.mjs && node scripts/package.mjs --no-build",
+    "test": "vitest run"
   },
   "keywords": [
     "browser-extension",
