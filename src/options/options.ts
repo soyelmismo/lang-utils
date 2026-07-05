@@ -16,7 +16,6 @@ import {
   importTheme,
 } from "../lib/themes";
 import {
-  $,
   $btn,
   $div,
   $form,
@@ -1003,6 +1002,3 @@ function populateCustomColorInputs(theme: ThemeSettings["custom"]): void {
     if (input) input.value = theme[key];
   }
 }
-
-// Suppress unused import warning
-void $;
