@@ -4,17 +4,17 @@
   "description": "AI language utilities browser extension: translate, summarize, explain and more. TypeScript + Manifest V3 (Chrome + Firefox).",
   "type": "module",
   "scripts": {
-    "test": "vitest run",
     "clean": "rm -rf dist",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "lint": "eslint src scripts",
     "build": "node scripts/build.mjs",
     "build:watch": "node scripts/build.mjs --watch",
     "package": "node scripts/ensure-deps.mjs && node scripts/package.mjs",
     "package:chrome": "node scripts/ensure-deps.mjs && node scripts/package.mjs --target=chrome",
     "package:firefox": "node scripts/ensure-deps.mjs && node scripts/package.mjs --target=firefox",
-    "package:no-build": "node scripts/ensure-deps.mjs && node scripts/package.mjs --no-build",
-    "test": "vitest run"
+    "package:no-build": "node scripts/ensure-deps.mjs && node scripts/package.mjs --no-build"
   },
   "keywords": [
     "browser-extension",
@@ -30,12 +30,12 @@
     "@eslint/js": "^9.39.4",
     "@types/dompurify": "^3.0.5",
     "@types/webextension-polyfill": "^0.12.1",
+    "@vitest/coverage-v8": "^4.1.9",
     "esbuild": "^0.24.0",
     "eslint": "^9.39.4",
     "globals": "^15.15.0",
     "jsdom": "^29.1.1",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.9.3",
+    "typescript": "^5.7.2",
     "typescript-eslint": "^8.62.0",
     "vitest": "^4.1.9",
     "webextension-polyfill": "^0.12.0"
