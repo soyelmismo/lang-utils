@@ -110,9 +110,6 @@ async function contentMain(): Promise<void> {
   style.textContent = CONTENT_STYLES;
   document.head.appendChild(style);
 
-  // eslint-disable-next-line no-console
-  console.log("[Lang Utils Content] Loaded in", window.location.href);
-
   setupPanel();
   setupToolbar();
   setupFormInjection();
@@ -1459,8 +1456,6 @@ function setupMessageHandler(): void {
   ): true | undefined => {
     const message = rawMessage as Record<string, unknown>;
     const type = String(message.type || "");
-    // eslint-disable-next-line no-console
-    console.log("[Lang Utils Content] Received:", type);
     try {
       switch (type) {
         case "ping":
