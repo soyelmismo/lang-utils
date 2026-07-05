@@ -1340,6 +1340,112 @@ function setupFormInjection(): void {
 //  MESSAGE HANDLER (from background)
 // ============================================================
 
+function handleShowLoading(message: Record<string, unknown>) {
+  const title = String(message.title || "");
+  const loadingOuter = document.createElement("div");
+  loadingOuter.className = "lu-loading";
+  const spinner = document.createElement("div");
+  spinner.className = "lu-spinner";
+  loadingOuter.appendChild(spinner);
+  const loadingSpan = document.createElement("span");
+  loadingSpan.textContent = msg("content_processing");
+  loadingOuter.appendChild(loadingSpan);
+  if (currentSettings.resultPopup) {
+    createPopup(title, loadingOuter);
+  } else {
+    const loadingOuter2 = document.createElement("div");
+    loadingOuter2.className = "lu-loading";
+    const spinner2 = document.createElement("div");
+    spinner2.className = "lu-spinner";
+    loadingOuter2.appendChild(spinner2);
+    const loadingSpan2 = document.createElement("span");
+    loadingSpan2.textContent = msg("content_processing");
+    loadingOuter2.appendChild(loadingSpan2);
+    createPanel(title, loadingOuter2);
+  }
+}
+
+function handleShowResult(message: Record<string, unknown>) {
+  const title = String(message.title || "");
+  const content = String(message.content || "");
+  // markdownToFragment is async (lazy-loaded). Use a placeholder
+  // element so the panel/popup appears immediately, then upgrade
+  // to rendered HTML once the bundle is ready.
+  const placeholder = document.createElement("div");
+  placeholder.className = "lu-markdown-loading";
+  placeholder.textContent = content.replace(/\\n/g, "\n");
+  if (currentSettings.resultPopup) {
+    createPopup(title, placeholder, { copyText: content });
+    void markdownToFragmentWithUpgrade(content, placeholder);
+  } else {
+    const actionsBar = document.createElement("div");
+    actionsBar.className = "lu-actions-bar";
+    const copyFullBtn = document.createElement("button");
+    copyFullBtn.className = "lu-action-btn";
+    copyFullBtn.id = "lu-copy-full";
+    copyFullBtn.textContent = msg("content_copy_all");
+    actionsBar.appendChild(copyFullBtn);
+    createPanel(title, placeholder, { actions: actionsBar });
+    copyFullBtn.addEventListener("click", () => {
+      copyWithFeedback(
+        content,
+        copyFullBtn as HTMLButtonElement,
+        msg("content_copy_all")
+      );
+    });
+    void markdownToFragmentWithUpgrade(content, placeholder);
+  }
+}
+
+function handleShowError(message: Record<string, unknown>) {
+  const title = String(message.title || "");
+  const content = String(message.content || "");
+  const showErrorDiv = document.createElement("div");
+  showErrorDiv.className = "lu-error";
+  showErrorDiv.textContent = content;
+  if (currentSettings.resultPopup) {
+    createPopup(title, showErrorDiv);
+  } else {
+    const showErrorDiv2 = document.createElement("div");
+    showErrorDiv2.className = "lu-error";
+    showErrorDiv2.textContent = content;
+    createPanel(title, showErrorDiv2);
+  }
+}
+
+function handleToggleTranslateWrite() {
+  if (activeField && isFormElement(activeField)) {
+    if (twActive && twTargetField === activeField) {
+      deactivateTW(activeField);
+    } else {
+      activateTW(activeField);
+    }
+    removeFormUI();
+    showFormButton(activeField);
+    showFormMenu(activeField);
+  }
+}
+
+function handleModesUpdated() {
+  // Toolbar must reflect the latest mode list (favorites, additions,
+  // deletions, edits). Re-fetch and rebuild.
+  removeToolbar();
+  void refreshToolbarModes();
+}
+
+function handleSettingsUpdated() {
+  // Options/background saved new settings (favoriteTargetLang,
+  // resultPopup, translate-write target/debounce, etc.).
+  void refreshSettings();
+}
+
+function handleCleanupUI() {
+  // Extension updated or browser started — remove any ghost UI from
+  // previous versions that might still be in the DOM.
+  removeToolbar();
+  removePanel();
+}
+
 function setupMessageHandler(): void {
   // The polyfill's OnMessageListener type expects one of three signatures:
   //   (msg, sender, sendResponse) => true   // sync response via sendResponse
@@ -1360,122 +1466,29 @@ function setupMessageHandler(): void {
         case "ping":
           sendResponse({ pong: true });
           return true; // keep channel open for sendResponse
-
-        case "show-loading": {
-          const title = String(message.title || "");
-          const loadingOuter = document.createElement("div");
-          loadingOuter.className = "lu-loading";
-          const spinner = document.createElement("div");
-          spinner.className = "lu-spinner";
-          loadingOuter.appendChild(spinner);
-          const loadingSpan = document.createElement("span");
-          loadingSpan.textContent = msg("content_processing");
-          loadingOuter.appendChild(loadingSpan);
-          if (currentSettings.resultPopup) {
-            createPopup(title, loadingOuter);
-          } else {
-            const loadingOuter2 = document.createElement("div");
-            loadingOuter2.className = "lu-loading";
-            const spinner2 = document.createElement("div");
-            spinner2.className = "lu-spinner";
-            loadingOuter2.appendChild(spinner2);
-            const loadingSpan2 = document.createElement("span");
-            loadingSpan2.textContent = msg("content_processing");
-            loadingOuter2.appendChild(loadingSpan2);
-            createPanel(title, loadingOuter2);
-          }
+        case "show-loading":
+          handleShowLoading(message);
           return;
-        }
-
-        case "show-result": {
-          const title = String(message.title || "");
-          const content = String(message.content || "");
-          // markdownToFragment is async (lazy-loaded). Use a placeholder
-          // element so the panel/popup appears immediately, then upgrade
-          // to rendered HTML once the bundle is ready.
-          const placeholder = document.createElement("div");
-          placeholder.className = "lu-markdown-loading";
-          placeholder.textContent = content.replace(/\\n/g, "\n");
-          if (currentSettings.resultPopup) {
-            createPopup(title, placeholder, { copyText: content });
-            void markdownToFragmentWithUpgrade(content, placeholder);
-          } else {
-            const actionsBar = document.createElement("div");
-            actionsBar.className = "lu-actions-bar";
-            const copyFullBtn = document.createElement("button");
-            copyFullBtn.className = "lu-action-btn";
-            copyFullBtn.id = "lu-copy-full";
-            copyFullBtn.textContent = msg("content_copy_all");
-            actionsBar.appendChild(copyFullBtn);
-            createPanel(title, placeholder, { actions: actionsBar });
-            copyFullBtn.addEventListener("click", () => {
-              copyWithFeedback(
-                content,
-                copyFullBtn as HTMLButtonElement,
-                msg("content_copy_all")
-              );
-            });
-            void markdownToFragmentWithUpgrade(content, placeholder);
-          }
+        case "show-result":
+          handleShowResult(message);
           return;
-        }
-
-        case "show-error": {
-          const title = String(message.title || "");
-          const content = String(message.content || "");
-          const showErrorDiv = document.createElement("div");
-          showErrorDiv.className = "lu-error";
-          showErrorDiv.textContent = content;
-          if (currentSettings.resultPopup) {
-            createPopup(title, showErrorDiv);
-          } else {
-            const showErrorDiv2 = document.createElement("div");
-            showErrorDiv2.className = "lu-error";
-            showErrorDiv2.textContent = content;
-            createPanel(title, showErrorDiv2);
-          }
+        case "show-error":
+          handleShowError(message);
           return;
-        }
-
-        case "toggle-translate-write": {
-          if (activeField && isFormElement(activeField)) {
-            if (twActive && twTargetField === activeField) {
-              deactivateTW(activeField);
-            } else {
-              activateTW(activeField);
-            }
-            removeFormUI();
-            showFormButton(activeField);
-            showFormMenu(activeField);
-          }
+        case "toggle-translate-write":
+          handleToggleTranslateWrite();
           return;
-        }
-
-        case "modes-updated": {
-          // Toolbar must reflect the latest mode list (favorites, additions,
-          // deletions, edits). Re-fetch and rebuild.
-          removeToolbar();
-          void refreshToolbarModes();
+        case "modes-updated":
+          handleModesUpdated();
           return;
-        }
-
-        case "settings-updated": {
-          // Options/background saved new settings (favoriteTargetLang,
-          // resultPopup, translate-write target/debounce, etc.).
-          void refreshSettings();
+        case "settings-updated":
+          handleSettingsUpdated();
           return;
-        }
-
-        case "cleanup-ui": {
-          // Extension updated or browser started — remove any ghost UI from
-          // previous versions that might still be in the DOM.
-          removeToolbar();
-          removePanel();
+        case "cleanup-ui":
+          handleCleanupUI();
           return;
-        }
       }
     } catch (e) {
-       
       console.error("[Lang Utils Content] Error handling:", type, e);
     }
     return;
