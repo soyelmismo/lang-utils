@@ -88,6 +88,23 @@ async function writeManifest() {
   console.log(`  ✓ manifest.json (${target})`);
 }
 
+async function watchStatic() {
+  let timeout = null;
+  const watcher = fs.watch(SRC, { recursive: true });
+  for await (const event of watcher) {
+    if (event.filename && event.filename.endsWith(".ts")) continue;
+
+    const DEBOUNCE_MS = 100;
+    if (timeout) clearTimeout(timeout);
+    timeout = setTimeout(async () => {
+      timeout = null;
+      console.log(`\nStatic file changed: ${event.filename}`);
+      await writeManifest();
+      await copyStatic();
+    }, DEBOUNCE_MS);
+  }
+}
+
 /** Copy static assets: icons, _locales, HTML, CSS. */
 async function copyStatic() {
   // Icons
@@ -195,7 +212,7 @@ async function buildAll() {
     console.log("  ✓ TypeScript bundles built");
   }
 
-  // Static assets (in watch mode, do once — TODO: also watch)
+  // Static assets
   if (!watch) {
     await writeManifest();
     await copyStatic();
@@ -204,6 +221,7 @@ async function buildAll() {
     // Still need static files for the very first watch run
     await writeManifest();
     await copyStatic();
+    watchStatic().catch((err) => console.error("watchStatic failed:", err));
   }
 }
 
