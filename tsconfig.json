@@ -32,7 +32,7 @@
     "sourceMap": false,
     "declaration": false
   },
-  "include": [
+  "include": ["vitest.d.ts",
     "src/**/*.ts",
     "src/**/*.tsx",
     "scripts/**/*.mjs",
