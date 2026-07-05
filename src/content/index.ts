@@ -650,6 +650,7 @@ function showToolbar(x: number, y: number, selectedText: string): void {
   }
 
   // ── Other single modes (skip translate-to-favorite; already rendered) ──
+  const singleModesFrag = document.createDocumentFragment();
   for (const mode of toolbarModes) {
     if (mode.type !== "single") continue;
     if (mode.id === "translate-to-favorite") continue;
@@ -661,10 +662,12 @@ function showToolbar(x: number, y: number, selectedText: string): void {
       e.stopPropagation();
       sendModeToAPI(mode.id, "", selectedText, btn);
     });
-    toolbarEl.appendChild(btn);
+    singleModesFrag.appendChild(btn);
   }
+  toolbarEl.appendChild(singleModesFrag);
 
   // ── Group modes (sub-menus) ────────────────────────────────────────────
+  const groupModesFrag = document.createDocumentFragment();
   for (const group of toolbarGroups) {
     const wrapper = document.createElement("div");
     wrapper.className = "lu-tb-group";
@@ -682,6 +685,7 @@ function showToolbar(x: number, y: number, selectedText: string): void {
     const menu = document.createElement("div");
     menu.className = "lu-tb-group-menu";
 
+    const subModesFrag = document.createDocumentFragment();
     for (const sub of group.subModes || []) {
       const subBtn = document.createElement("button");
       subBtn.className = "lu-tb-sub";
@@ -691,8 +695,9 @@ function showToolbar(x: number, y: number, selectedText: string): void {
         e.stopPropagation();
         sendModeToAPI(group.id, sub.id, selectedText, subBtn);
       });
-      menu.appendChild(subBtn);
+      subModesFrag.appendChild(subBtn);
     }
+    menu.appendChild(subModesFrag);
 
     btn.addEventListener("mousedown", (e: MouseEvent) => {
       e.preventDefault();
@@ -706,8 +711,9 @@ function showToolbar(x: number, y: number, selectedText: string): void {
 
     wrapper.appendChild(btn);
     wrapper.appendChild(menu);
-    toolbarEl.appendChild(wrapper);
+    groupModesFrag.appendChild(wrapper);
   }
+  toolbarEl.appendChild(groupModesFrag);
 
   document.body.appendChild(toolbarEl);
 }
