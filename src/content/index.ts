@@ -110,6 +110,9 @@ async function contentMain(): Promise<void> {
   style.textContent = CONTENT_STYLES;
   document.head.appendChild(style);
 
+  // eslint-disable-next-line no-console
+  console.log("[Lang Utils Content] Loaded in", window.location.href);
+
   setupPanel();
   setupToolbar();
   setupFormInjection();
@@ -647,7 +650,6 @@ function showToolbar(x: number, y: number, selectedText: string): void {
   }
 
   // ── Other single modes (skip translate-to-favorite; already rendered) ──
-  const singleModesFrag = document.createDocumentFragment();
   for (const mode of toolbarModes) {
     if (mode.type !== "single") continue;
     if (mode.id === "translate-to-favorite") continue;
@@ -659,12 +661,10 @@ function showToolbar(x: number, y: number, selectedText: string): void {
       e.stopPropagation();
       sendModeToAPI(mode.id, "", selectedText, btn);
     });
-    singleModesFrag.appendChild(btn);
+    toolbarEl.appendChild(btn);
   }
-  toolbarEl.appendChild(singleModesFrag);
 
   // ── Group modes (sub-menus) ────────────────────────────────────────────
-  const groupModesFrag = document.createDocumentFragment();
   for (const group of toolbarGroups) {
     const wrapper = document.createElement("div");
     wrapper.className = "lu-tb-group";
@@ -682,7 +682,6 @@ function showToolbar(x: number, y: number, selectedText: string): void {
     const menu = document.createElement("div");
     menu.className = "lu-tb-group-menu";
 
-    const subModesFrag = document.createDocumentFragment();
     for (const sub of group.subModes || []) {
       const subBtn = document.createElement("button");
       subBtn.className = "lu-tb-sub";
@@ -692,9 +691,8 @@ function showToolbar(x: number, y: number, selectedText: string): void {
         e.stopPropagation();
         sendModeToAPI(group.id, sub.id, selectedText, subBtn);
       });
-      subModesFrag.appendChild(subBtn);
+      menu.appendChild(subBtn);
     }
-    menu.appendChild(subModesFrag);
 
     btn.addEventListener("mousedown", (e: MouseEvent) => {
       e.preventDefault();
@@ -708,9 +706,8 @@ function showToolbar(x: number, y: number, selectedText: string): void {
 
     wrapper.appendChild(btn);
     wrapper.appendChild(menu);
-    groupModesFrag.appendChild(wrapper);
+    toolbarEl.appendChild(wrapper);
   }
-  toolbarEl.appendChild(groupModesFrag);
 
   document.body.appendChild(toolbarEl);
 }
@@ -949,21 +946,7 @@ function showFormButton(el: HTMLElement): void {
   });
 }
 
-function showFormMenu(el: HTMLElement): void {
-  if (formMenu) {
-    formMenu.remove();
-    formMenu = null;
-  }
-  const rect = el.getBoundingClientRect();
-
-  formMenu = document.createElement("div");
-  formMenu.id = "lu-form-menu";
-  formMenu.style.position = "fixed";
-  formMenu.style.visibility = "hidden";
-  document.body.appendChild(formMenu);
-
-  const fragment = document.createDocumentFragment();
-
+function buildFormMenuSingleModes(menu: HTMLDivElement, el: HTMLElement): void {
   // Single modes (skip translate-to-favorite — handled by the toolbar)
   for (const mode of toolbarModes) {
     if (mode.type === "single" && mode.id === "translate-to-favorite") continue;
@@ -975,9 +958,11 @@ function showFormMenu(el: HTMLElement): void {
       e.stopPropagation();
       void processFormMode(el, mode.id, "");
     });
-    fragment.appendChild(item);
+    menu.appendChild(item);
   }
+}
 
+function buildFormMenuGroups(menu: HTMLDivElement, el: HTMLElement): void {
   // Groups
   for (const group of toolbarGroups) {
     const groupItem = document.createElement("div");
@@ -1010,20 +995,25 @@ function showFormMenu(el: HTMLElement): void {
       e.preventDefault();
       e.stopPropagation();
       const wasOpen = subsContainer.classList.contains("lu-show");
-      formMenu
+      menu
         ?.querySelectorAll<HTMLDivElement>(".lu-fm-subs.lu-show")
         .forEach((s) => s.classList.remove("lu-show"));
       if (!wasOpen) subsContainer.classList.add("lu-show");
     });
 
-    fragment.appendChild(groupItem);
-    fragment.appendChild(subsContainer);
+    menu.appendChild(groupItem);
+    menu.appendChild(subsContainer);
   }
+}
 
+function buildFormMenuTranslateWriteSection(
+  menu: HTMLDivElement,
+  el: HTMLElement
+): void {
   // ---- Translate-write section ----
   const divider = document.createElement("div");
   divider.className = "lu-fm-divider";
-  fragment.appendChild(divider);
+  menu.appendChild(divider);
 
   if (twActive && twTargetField === el) {
     // Active: show language picker + stop
@@ -1033,7 +1023,7 @@ function showFormMenu(el: HTMLElement): void {
     twDot.className = "lu-fm-tw-dot";
     header.appendChild(twDot);
     header.appendChild(document.createTextNode(" " + msg("content_tw_active")));
-    fragment.appendChild(header);
+    menu.appendChild(header);
 
     for (const code of TW_LANGUAGES) {
       const langItem = document.createElement("div");
@@ -1052,7 +1042,7 @@ function showFormMenu(el: HTMLElement): void {
         showFormButton(el);
         showFormMenu(el);
       });
-      fragment.appendChild(langItem);
+      menu.appendChild(langItem);
     }
 
     const stopItem = document.createElement("div");
@@ -1065,7 +1055,7 @@ function showFormMenu(el: HTMLElement): void {
       removeFormUI();
       showFormButton(el);
     });
-    fragment.appendChild(stopItem);
+    menu.appendChild(stopItem);
   } else {
     // Inactive: show activate option
     const activateItem = document.createElement("div");
@@ -1081,15 +1071,16 @@ function showFormMenu(el: HTMLElement): void {
       showFormButton(el);
       showFormMenu(el);
     });
-    fragment.appendChild(activateItem);
+    menu.appendChild(activateItem);
   }
+}
 
-  formMenu.appendChild(fragment);
-
+function positionFormMenu(menu: HTMLDivElement, el: HTMLElement): void {
   // Position menu
+  const rect = el.getBoundingClientRect();
   const menuW = FORM_MENU_WIDTH_PX;
   const menuH =
-    formMenu.children.length * FORM_MENU_ITEM_HEIGHT_PX +
+    menu.children.length * FORM_MENU_ITEM_HEIGHT_PX +
     FORM_MENU_VERTICAL_PADDING_PX;
   const edge = VIEWPORT_EDGE_MARGIN_PX;
   const vw = window.innerWidth;
@@ -1100,9 +1091,27 @@ function showFormMenu(el: HTMLElement): void {
   let left = rect.right - menuW;
   if (left < edge) left = edge;
   if (left + menuW > vw - edge) left = vw - menuW - edge;
-  formMenu.style.top = top + "px";
-  formMenu.style.left = left + "px";
-  formMenu.style.visibility = "";
+  menu.style.top = top + "px";
+  menu.style.left = left + "px";
+  menu.style.visibility = "";
+}
+
+function showFormMenu(el: HTMLElement): void {
+  if (formMenu) {
+    formMenu.remove();
+    formMenu = null;
+  }
+
+  formMenu = document.createElement("div");
+  formMenu.id = "lu-form-menu";
+  formMenu.style.position = "fixed";
+  formMenu.style.visibility = "hidden";
+  document.body.appendChild(formMenu);
+
+  buildFormMenuSingleModes(formMenu, el);
+  buildFormMenuGroups(formMenu, el);
+  buildFormMenuTranslateWriteSection(formMenu, el);
+  positionFormMenu(formMenu, el);
 }
 
 // ---- Translate-write ----
@@ -1337,112 +1346,6 @@ function setupFormInjection(): void {
 //  MESSAGE HANDLER (from background)
 // ============================================================
 
-function handleShowLoading(message: Record<string, unknown>) {
-  const title = String(message.title || "");
-  const loadingOuter = document.createElement("div");
-  loadingOuter.className = "lu-loading";
-  const spinner = document.createElement("div");
-  spinner.className = "lu-spinner";
-  loadingOuter.appendChild(spinner);
-  const loadingSpan = document.createElement("span");
-  loadingSpan.textContent = msg("content_processing");
-  loadingOuter.appendChild(loadingSpan);
-  if (currentSettings.resultPopup) {
-    createPopup(title, loadingOuter);
-  } else {
-    const loadingOuter2 = document.createElement("div");
-    loadingOuter2.className = "lu-loading";
-    const spinner2 = document.createElement("div");
-    spinner2.className = "lu-spinner";
-    loadingOuter2.appendChild(spinner2);
-    const loadingSpan2 = document.createElement("span");
-    loadingSpan2.textContent = msg("content_processing");
-    loadingOuter2.appendChild(loadingSpan2);
-    createPanel(title, loadingOuter2);
-  }
-}
-
-function handleShowResult(message: Record<string, unknown>) {
-  const title = String(message.title || "");
-  const content = String(message.content || "");
-  // markdownToFragment is async (lazy-loaded). Use a placeholder
-  // element so the panel/popup appears immediately, then upgrade
-  // to rendered HTML once the bundle is ready.
-  const placeholder = document.createElement("div");
-  placeholder.className = "lu-markdown-loading";
-  placeholder.textContent = content.replace(/\\n/g, "\n");
-  if (currentSettings.resultPopup) {
-    createPopup(title, placeholder, { copyText: content });
-    void markdownToFragmentWithUpgrade(content, placeholder);
-  } else {
-    const actionsBar = document.createElement("div");
-    actionsBar.className = "lu-actions-bar";
-    const copyFullBtn = document.createElement("button");
-    copyFullBtn.className = "lu-action-btn";
-    copyFullBtn.id = "lu-copy-full";
-    copyFullBtn.textContent = msg("content_copy_all");
-    actionsBar.appendChild(copyFullBtn);
-    createPanel(title, placeholder, { actions: actionsBar });
-    copyFullBtn.addEventListener("click", () => {
-      copyWithFeedback(
-        content,
-        copyFullBtn as HTMLButtonElement,
-        msg("content_copy_all")
-      );
-    });
-    void markdownToFragmentWithUpgrade(content, placeholder);
-  }
-}
-
-function handleShowError(message: Record<string, unknown>) {
-  const title = String(message.title || "");
-  const content = String(message.content || "");
-  const showErrorDiv = document.createElement("div");
-  showErrorDiv.className = "lu-error";
-  showErrorDiv.textContent = content;
-  if (currentSettings.resultPopup) {
-    createPopup(title, showErrorDiv);
-  } else {
-    const showErrorDiv2 = document.createElement("div");
-    showErrorDiv2.className = "lu-error";
-    showErrorDiv2.textContent = content;
-    createPanel(title, showErrorDiv2);
-  }
-}
-
-function handleToggleTranslateWrite() {
-  if (activeField && isFormElement(activeField)) {
-    if (twActive && twTargetField === activeField) {
-      deactivateTW(activeField);
-    } else {
-      activateTW(activeField);
-    }
-    removeFormUI();
-    showFormButton(activeField);
-    showFormMenu(activeField);
-  }
-}
-
-function handleModesUpdated() {
-  // Toolbar must reflect the latest mode list (favorites, additions,
-  // deletions, edits). Re-fetch and rebuild.
-  removeToolbar();
-  void refreshToolbarModes();
-}
-
-function handleSettingsUpdated() {
-  // Options/background saved new settings (favoriteTargetLang,
-  // resultPopup, translate-write target/debounce, etc.).
-  void refreshSettings();
-}
-
-function handleCleanupUI() {
-  // Extension updated or browser started — remove any ghost UI from
-  // previous versions that might still be in the DOM.
-  removeToolbar();
-  removePanel();
-}
-
 function setupMessageHandler(): void {
   // The polyfill's OnMessageListener type expects one of three signatures:
   //   (msg, sender, sendResponse) => true   // sync response via sendResponse
@@ -1456,34 +1359,129 @@ function setupMessageHandler(): void {
   ): true | undefined => {
     const message = rawMessage as Record<string, unknown>;
     const type = String(message.type || "");
+    // eslint-disable-next-line no-console
+    console.log("[Lang Utils Content] Received:", type);
     try {
       switch (type) {
         case "ping":
           sendResponse({ pong: true });
           return true; // keep channel open for sendResponse
-        case "show-loading":
-          handleShowLoading(message);
+
+        case "show-loading": {
+          const title = String(message.title || "");
+          const loadingOuter = document.createElement("div");
+          loadingOuter.className = "lu-loading";
+          const spinner = document.createElement("div");
+          spinner.className = "lu-spinner";
+          loadingOuter.appendChild(spinner);
+          const loadingSpan = document.createElement("span");
+          loadingSpan.textContent = msg("content_processing");
+          loadingOuter.appendChild(loadingSpan);
+          if (currentSettings.resultPopup) {
+            createPopup(title, loadingOuter);
+          } else {
+            const loadingOuter2 = document.createElement("div");
+            loadingOuter2.className = "lu-loading";
+            const spinner2 = document.createElement("div");
+            spinner2.className = "lu-spinner";
+            loadingOuter2.appendChild(spinner2);
+            const loadingSpan2 = document.createElement("span");
+            loadingSpan2.textContent = msg("content_processing");
+            loadingOuter2.appendChild(loadingSpan2);
+            createPanel(title, loadingOuter2);
+          }
           return;
-        case "show-result":
-          handleShowResult(message);
+        }
+
+        case "show-result": {
+          const title = String(message.title || "");
+          const content = String(message.content || "");
+          // markdownToFragment is async (lazy-loaded). Use a placeholder
+          // element so the panel/popup appears immediately, then upgrade
+          // to rendered HTML once the bundle is ready.
+          const placeholder = document.createElement("div");
+          placeholder.className = "lu-markdown-loading";
+          placeholder.textContent = content.replace(/\\n/g, "\n");
+          if (currentSettings.resultPopup) {
+            createPopup(title, placeholder, { copyText: content });
+            void markdownToFragmentWithUpgrade(content, placeholder);
+          } else {
+            const actionsBar = document.createElement("div");
+            actionsBar.className = "lu-actions-bar";
+            const copyFullBtn = document.createElement("button");
+            copyFullBtn.className = "lu-action-btn";
+            copyFullBtn.id = "lu-copy-full";
+            copyFullBtn.textContent = msg("content_copy_all");
+            actionsBar.appendChild(copyFullBtn);
+            createPanel(title, placeholder, { actions: actionsBar });
+            copyFullBtn.addEventListener("click", () => {
+              copyWithFeedback(
+                content,
+                copyFullBtn as HTMLButtonElement,
+                msg("content_copy_all")
+              );
+            });
+            void markdownToFragmentWithUpgrade(content, placeholder);
+          }
           return;
-        case "show-error":
-          handleShowError(message);
+        }
+
+        case "show-error": {
+          const title = String(message.title || "");
+          const content = String(message.content || "");
+          const showErrorDiv = document.createElement("div");
+          showErrorDiv.className = "lu-error";
+          showErrorDiv.textContent = content;
+          if (currentSettings.resultPopup) {
+            createPopup(title, showErrorDiv);
+          } else {
+            const showErrorDiv2 = document.createElement("div");
+            showErrorDiv2.className = "lu-error";
+            showErrorDiv2.textContent = content;
+            createPanel(title, showErrorDiv2);
+          }
           return;
-        case "toggle-translate-write":
-          handleToggleTranslateWrite();
+        }
+
+        case "toggle-translate-write": {
+          if (activeField && isFormElement(activeField)) {
+            if (twActive && twTargetField === activeField) {
+              deactivateTW(activeField);
+            } else {
+              activateTW(activeField);
+            }
+            removeFormUI();
+            showFormButton(activeField);
+            showFormMenu(activeField);
+          }
           return;
-        case "modes-updated":
-          handleModesUpdated();
+        }
+
+        case "modes-updated": {
+          // Toolbar must reflect the latest mode list (favorites, additions,
+          // deletions, edits). Re-fetch and rebuild.
+          removeToolbar();
+          void refreshToolbarModes();
           return;
-        case "settings-updated":
-          handleSettingsUpdated();
+        }
+
+        case "settings-updated": {
+          // Options/background saved new settings (favoriteTargetLang,
+          // resultPopup, translate-write target/debounce, etc.).
+          void refreshSettings();
           return;
-        case "cleanup-ui":
-          handleCleanupUI();
+        }
+
+        case "cleanup-ui": {
+          // Extension updated or browser started — remove any ghost UI from
+          // previous versions that might still be in the DOM.
+          removeToolbar();
+          removePanel();
           return;
+        }
       }
     } catch (e) {
+       
       console.error("[Lang Utils Content] Error handling:", type, e);
     }
     return;
