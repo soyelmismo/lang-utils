@@ -9,7 +9,7 @@ const POPUP_BLUR_CLOSE_DELAY_MS = 150;
 import browser from "../lib/browser-compat";
 import { i18n, msg } from "../lib/i18n";
 import { loadAndApplyTheme, subscribeToSystemColorScheme } from "../lib/themes";
-import { $, $span, $div, $btn } from "../lib/dom";
+import { $span, $div, $btn } from "../lib/dom";
 import type { AnyMode, Settings } from "../types";
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -186,5 +186,3 @@ function setupButtons(): void {
   });
 }
 
-// Suppress unused import warning for `$` (kept for future use)
-void $;
