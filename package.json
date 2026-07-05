@@ -4,6 +4,7 @@
   "description": "AI language utilities browser extension: translate, summarize, explain and more. TypeScript + Manifest V3 (Chrome + Firefox).",
   "type": "module",
   "scripts": {
+    "test": "vitest run",
     "clean": "rm -rf dist",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src scripts",
@@ -35,6 +36,7 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.62.0",
+    "vitest": "^4.1.9",
     "webextension-polyfill": "^0.12.0"
   },
   "dependencies": {
