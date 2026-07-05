@@ -373,18 +373,21 @@ function renderModesList(): void {
   const lang = currentSettings.language || "es";
   const langNameStr = i18n.langName(lang);
 
+  const fragment = document.createDocumentFragment();
+
   for (const mode of currentModes) {
     if (mode.type === "group") {
-      renderGroupCard(container, mode);
+      renderGroupCard(fragment, mode);
     } else {
-      renderModeCard(container, mode, langNameStr);
+      renderModeCard(fragment, mode, langNameStr);
     }
   }
 
+  container.appendChild(fragment);
   attachEventListeners(container);
 }
 
-function renderGroupCard(container: HTMLElement, group: ModeGroup): void {
+function renderGroupCard(container: HTMLElement | DocumentFragment, group: ModeGroup): void {
   const card = document.createElement("div");
   card.className = "mode-card mode-card-group";
 
@@ -502,7 +505,7 @@ function renderGroupCard(container: HTMLElement, group: ModeGroup): void {
 }
 
 function renderModeCard(
-  container: HTMLElement,
+  container: HTMLElement | DocumentFragment,
   mode: Mode,
   langNameStr: string
 ): void {
