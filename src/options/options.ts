@@ -51,12 +51,6 @@ const DEFAULT_TEMPERATURE = 0.7;
 /** Time (ms) the "Saved" status text stays visible before clearing. */
 const SAVE_STATUS_CLEAR_MS = 3000;
 
-/** Random-id suffix length for newly created modes/groups (avoids collisions; small enough to be human-readable). */
-const RANDOM_ID_SUFFIX_LEN = 7;
-
-/** Base for the random-id suffix (alphanumeric lowercase, 36 = 0-9a-z). */
-const RANDOM_ID_BASE = 36;
-
 /** Max characters of a sub-mode prompt shown in the modes list (rest is "..."). */
 const SUB_MODE_PROMPT_PREVIEW_CHARS = 80;
 
@@ -265,8 +259,7 @@ function setupModeForm(): void {
           await browser.runtime.sendMessage({ type: "update-mode", mode: updated });
         }
       } else {
-        const newId =
-          "group-" + Date.now() + "-" + Math.random().toString(RANDOM_ID_BASE).slice(2, 2 + RANDOM_ID_SUFFIX_LEN);
+        const newId = "group-" + crypto.randomUUID();
         const newGroup: ModeGroup = {
           id: newId,
           name,
@@ -293,7 +286,7 @@ function setupModeForm(): void {
         };
         await browser.runtime.sendMessage({ type: "update-mode", mode: updated });
       } else {
-        const newId = "custom-" + Date.now() + "-" + Math.random().toString(RANDOM_ID_BASE).slice(2, 2 + RANDOM_ID_SUFFIX_LEN);
+        const newId = "custom-" + crypto.randomUUID();
         const newMode: Mode = {
           id: newId,
           name,
@@ -331,7 +324,7 @@ function setupSubModeForm(): void {
         subMode: updated,
       });
     } else {
-      const newSubId = "sub-" + Date.now() + "-" + Math.random().toString(RANDOM_ID_BASE).slice(2, 2 + RANDOM_ID_SUFFIX_LEN);
+      const newSubId = "sub-" + crypto.randomUUID();
       const newSub: SubMode = { id: newSubId, name, prompt, model };
       await browser.runtime.sendMessage({
         type: "add-sub-mode",
