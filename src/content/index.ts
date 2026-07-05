@@ -959,6 +959,8 @@ function showFormMenu(el: HTMLElement): void {
   formMenu.style.visibility = "hidden";
   document.body.appendChild(formMenu);
 
+  const fragment = document.createDocumentFragment();
+
   // Single modes (skip translate-to-favorite — handled by the toolbar)
   for (const mode of toolbarModes) {
     if (mode.type === "single" && mode.id === "translate-to-favorite") continue;
@@ -970,7 +972,7 @@ function showFormMenu(el: HTMLElement): void {
       e.stopPropagation();
       void processFormMode(el, mode.id, "");
     });
-    formMenu.appendChild(item);
+    fragment.appendChild(item);
   }
 
   // Groups
@@ -1011,14 +1013,14 @@ function showFormMenu(el: HTMLElement): void {
       if (!wasOpen) subsContainer.classList.add("lu-show");
     });
 
-    formMenu.appendChild(groupItem);
-    formMenu.appendChild(subsContainer);
+    fragment.appendChild(groupItem);
+    fragment.appendChild(subsContainer);
   }
 
   // ---- Translate-write section ----
   const divider = document.createElement("div");
   divider.className = "lu-fm-divider";
-  formMenu.appendChild(divider);
+  fragment.appendChild(divider);
 
   if (twActive && twTargetField === el) {
     // Active: show language picker + stop
@@ -1028,7 +1030,7 @@ function showFormMenu(el: HTMLElement): void {
     twDot.className = "lu-fm-tw-dot";
     header.appendChild(twDot);
     header.appendChild(document.createTextNode(" " + msg("content_tw_active")));
-    formMenu.appendChild(header);
+    fragment.appendChild(header);
 
     for (const code of TW_LANGUAGES) {
       const langItem = document.createElement("div");
@@ -1047,7 +1049,7 @@ function showFormMenu(el: HTMLElement): void {
         showFormButton(el);
         showFormMenu(el);
       });
-      formMenu.appendChild(langItem);
+      fragment.appendChild(langItem);
     }
 
     const stopItem = document.createElement("div");
@@ -1060,7 +1062,7 @@ function showFormMenu(el: HTMLElement): void {
       removeFormUI();
       showFormButton(el);
     });
-    formMenu.appendChild(stopItem);
+    fragment.appendChild(stopItem);
   } else {
     // Inactive: show activate option
     const activateItem = document.createElement("div");
@@ -1076,8 +1078,10 @@ function showFormMenu(el: HTMLElement): void {
       showFormButton(el);
       showFormMenu(el);
     });
-    formMenu.appendChild(activateItem);
+    fragment.appendChild(activateItem);
   }
+
+  formMenu.appendChild(fragment);
 
   // Position menu
   const menuW = FORM_MENU_WIDTH_PX;
