@@ -60,7 +60,7 @@ export function parseResponseText(text: string): string {
 
   // SSE streaming response
   const lines = text.split("\n");
-  let result = "";
+  const result: string[] = [];
   for (const line of lines) {
     const trimmed = line.trim();
     if (!trimmed || trimmed === "data: [DONE]") continue;
@@ -68,15 +68,15 @@ export function parseResponseText(text: string): string {
       try {
         const chunk = JSON.parse(trimmed.slice(SSE_DATA_PREFIX_LEN)) as ChatCompletionResponse;
         const choice = chunk.choices?.[0];
-        if (choice?.delta?.content) result += choice.delta.content;
-        if (choice?.message?.content) result += choice.message.content;
+        if (choice?.delta?.content) result.push(choice.delta.content);
+        if (choice?.message?.content) result.push(choice.message.content);
       } catch {
         // ignore malformed chunks
       }
     }
   }
 
-  if (result.length > 0) return result;
+  if (result.length > 0) return result.join("");
 
   throw new Error(
     "Could not parse API response: " + (text || "").substring(0, PARSE_ERROR_PREVIEW_CHARS)
