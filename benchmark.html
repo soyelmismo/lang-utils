@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Benchmark</title>
+</head>
+<body>
+  <div id="container-baseline"></div>
+  <div id="container-optimized"></div>
+  <script>
+    function bench() {
+      // Setup
+      const numElements = 1000;
+      const baselineContainer = document.getElementById('container-baseline');
+      const optimizedContainer = document.getElementById('container-optimized');
+
+      // Baseline
+      const startBaseline = performance.now();
+      for (let i = 0; i < numElements; i++) {
+        const el = document.createElement('div');
+        el.textContent = 'Mode ' + i;
+        baselineContainer.appendChild(el);
+      }
+      const endBaseline = performance.now();
+
+      // Optimized
+      const startOptimized = performance.now();
+      const fragment = document.createDocumentFragment();
+      for (let i = 0; i < numElements; i++) {
+        const el = document.createElement('div');
+        el.textContent = 'Mode ' + i;
+        fragment.appendChild(el);
+      }
+      optimizedContainer.appendChild(fragment);
+      const endOptimized = performance.now();
+
+      console.log(`Baseline: ${endBaseline - startBaseline} ms`);
+      console.log(`Optimized: ${endOptimized - startOptimized} ms`);
+    }
+    bench();
+  </script>
+</body>
+</html>
