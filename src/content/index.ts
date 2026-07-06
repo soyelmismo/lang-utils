@@ -413,6 +413,7 @@ function removeToolbar(): void {
     toolbarEl.remove();
     toolbarEl = null;
   }
+  document.querySelectorAll(".lu-tb-group-menu").forEach((m) => m.remove());
 }
 
 /** Send a mode to the background for processing, then show result panel. */
@@ -503,6 +504,12 @@ function sendModeToAPI(
 
 /** Position a dropdown menu below a trigger button, keeping it within viewport. */
 function positionMenu(trigger: HTMLElement, menu: HTMLElement): void {
+  // Ensure the menu has layout so we can measure it
+  const hasShow = menu.classList.contains("lu-show");
+  if (!hasShow) {
+    menu.classList.add("lu-show");
+  }
+
   const triggerRect = trigger.getBoundingClientRect();
   const menuRect = menu.getBoundingClientRect();
   const vw = window.innerWidth;
@@ -514,12 +521,12 @@ function positionMenu(trigger: HTMLElement, menu: HTMLElement): void {
   let left = triggerRect.left;
 
   // Flip vertically if would go off bottom
-  if (top + menuRect.height > vh) {
+  if (top + menuRect.height > vh - GAP) {
     top = triggerRect.top - menuRect.height - GAP;
   }
 
   // Flip horizontally if would go off right
-  if (left + menuRect.width > vw) {
+  if (left + menuRect.width > vw - GAP) {
     left = triggerRect.right - menuRect.width;
   }
 
@@ -527,8 +534,13 @@ function positionMenu(trigger: HTMLElement, menu: HTMLElement): void {
   top = Math.max(GAP, Math.min(top, vh - menuRect.height - GAP));
   left = Math.max(GAP, Math.min(left, vw - menuRect.width - GAP));
 
-  menu.style.top = top + "px";
-  menu.style.left = left + "px";
+  menu.style.position = "absolute";
+  menu.style.top = (top + window.scrollY) + "px";
+  menu.style.left = (left + window.scrollX) + "px";
+
+  if (!hasShow) {
+    menu.classList.remove("lu-show");
+  }
 }
 
 /** Resolve {{targetLang}} placeholder in a mode name using the user's favorite target language. */
@@ -537,14 +549,12 @@ function renderModeName(mode: Mode): string {
   return mode.name.replace(/\{\{targetLang\}\}/g, nativeLangName(target));
 }
 
-/** Show the floating toolbar at coordinates. */
-function showToolbar(x: number, y: number, selectedText: string): void {
+/** Show the floating toolbar, auto-adjusting to stay in the viewport. */
+function showToolbar(rect: DOMRect, selectedText: string): void {
   removeToolbar();
 
   toolbarEl = document.createElement("div");
   toolbarEl.id = "lu-toolbar";
-  toolbarEl.style.left = x + "px";
-  toolbarEl.style.top = y + TOOLBAR_OFFSET_PX + "px";
 
   // ── Always-present translate-to-favorite button (protected mode) ──────
   const translateMode = toolbarModes.find(
@@ -645,8 +655,8 @@ function showToolbar(x: number, y: number, selectedText: string): void {
     langMenu.addEventListener("mouseleave", closeMenu);
 
     langWrapper.appendChild(langBtn);
-    langWrapper.appendChild(langMenu);
     toolbarEl.appendChild(langWrapper);
+    document.body.appendChild(langMenu);
   }
 
   // ── Other single modes (skip translate-to-favorite; already rendered) ──
@@ -701,15 +711,46 @@ function showToolbar(x: number, y: number, selectedText: string): void {
       document
         .querySelectorAll<HTMLDivElement>(".lu-tb-group-menu.lu-show")
         .forEach((m) => m.classList.remove("lu-show"));
-      if (!wasOpen) menu.classList.add("lu-show");
+      if (!wasOpen) {
+        positionMenu(btn, menu);
+        menu.classList.add("lu-show");
+      }
     });
 
     wrapper.appendChild(btn);
-    wrapper.appendChild(menu);
     toolbarEl.appendChild(wrapper);
+    document.body.appendChild(menu);
   }
 
   document.body.appendChild(toolbarEl);
+
+  const margin = VIEWPORT_EDGE_MARGIN_PX;
+  const offset = TOOLBAR_OFFSET_PX;
+  const toolbarWidth = toolbarEl.offsetWidth;
+  const toolbarHeight = toolbarEl.offsetHeight;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+
+  // Prefer below selection; flip up if not enough room.
+  let top = rect.bottom + window.scrollY + offset;
+  if (top + toolbarHeight > window.scrollY + vh - margin) {
+    top = rect.top + window.scrollY - toolbarHeight - offset;
+  }
+  if (top < window.scrollY + margin) {
+    top = window.scrollY + margin;
+  }
+
+  // Align left with selection, clamped to viewport.
+  let left = rect.left + window.scrollX;
+  if (left + toolbarWidth > window.scrollX + vw - margin) {
+    left = window.scrollX + vw - toolbarWidth - margin;
+  }
+  if (left < window.scrollX + margin) {
+    left = window.scrollX + margin;
+  }
+
+  toolbarEl.style.top = top + "px";
+  toolbarEl.style.left = left + "px";
 }
 
 /** Fetch modes from the background, classify into favorites + groups, and
@@ -780,13 +821,17 @@ function setupToolbar(): void {
       if (!sel || sel.rangeCount === 0) return;
       const range = sel.getRangeAt(0);
       const rect = range.getBoundingClientRect();
-      showToolbar(rect.left + window.scrollX, rect.bottom + window.scrollY, text);
+      showToolbar(rect, text);
     }, TOOLBAR_POSITION_DELAY_MS);
   });
 
   document.addEventListener("mousedown", (e: MouseEvent) => {
     const target = e.target as HTMLElement | null;
-    if (toolbarEl && !target?.closest("#lu-toolbar")) {
+    if (
+      toolbarEl &&
+      !target?.closest("#lu-toolbar") &&
+      !target?.closest(".lu-tb-group-menu")
+    ) {
       removeToolbar();
     }
   });
@@ -917,7 +962,7 @@ function showFormButton(el: HTMLElement): void {
   formArrow.setAttribute("aria-hidden", "true");
   formArrow.textContent = "\u25BE";
   formBtn.appendChild(formArrow);
-  formBtn.style.cssText = "position:fixed;z-index:2147483645;";
+  formBtn.style.cssText = "position:absolute;z-index:2147483645;";
   document.body.appendChild(formBtn);
 
   const btnW = FORM_BTN_WIDTH_PX;
@@ -931,8 +976,8 @@ function showFormButton(el: HTMLElement): void {
   if (left + btnW > vw - edge) left = vw - btnW - edge;
   if (top < edge) top = rect.bottom + edge;
   if (top + btnH > vh - edge) top = vh - btnH - edge;
-  formBtn.style.top = top + "px";
-  formBtn.style.left = left + "px";
+  formBtn.style.top = (top + window.scrollY) + "px";
+  formBtn.style.left = (left + window.scrollX) + "px";
 
   if (twActive && twTargetField === el) {
     formBtn.classList.add("lu-tw-active");
@@ -1002,6 +1047,7 @@ function buildFormMenuGroups(menu: HTMLDivElement, el: HTMLElement): void {
         ?.querySelectorAll<HTMLDivElement>(".lu-fm-subs.lu-show")
         .forEach((s) => s.classList.remove("lu-show"));
       if (!wasOpen) subsContainer.classList.add("lu-show");
+      positionFormMenu(menu, el);
     });
 
     menu.appendChild(groupItem);
@@ -1081,10 +1127,8 @@ function buildFormMenuTranslateWriteSection(
 function positionFormMenu(menu: HTMLDivElement, el: HTMLElement): void {
   // Position menu
   const rect = el.getBoundingClientRect();
-  const menuW = FORM_MENU_WIDTH_PX;
-  const menuH =
-    menu.children.length * FORM_MENU_ITEM_HEIGHT_PX +
-    FORM_MENU_VERTICAL_PADDING_PX;
+  const menuW = menu.offsetWidth || FORM_MENU_WIDTH_PX;
+  const menuH = menu.offsetHeight || (menu.children.length * FORM_MENU_ITEM_HEIGHT_PX + FORM_MENU_VERTICAL_PADDING_PX);
   const edge = VIEWPORT_EDGE_MARGIN_PX;
   const vw = window.innerWidth;
   const vh = window.innerHeight;
@@ -1094,8 +1138,9 @@ function positionFormMenu(menu: HTMLDivElement, el: HTMLElement): void {
   let left = rect.right - menuW;
   if (left < edge) left = edge;
   if (left + menuW > vw - edge) left = vw - menuW - edge;
-  menu.style.top = top + "px";
-  menu.style.left = left + "px";
+  menu.style.position = "absolute";
+  menu.style.top = (top + window.scrollY) + "px";
+  menu.style.left = (left + window.scrollX) + "px";
   menu.style.visibility = "";
 }
 
@@ -1107,7 +1152,7 @@ function showFormMenu(el: HTMLElement): void {
 
   formMenu = document.createElement("div");
   formMenu.id = "lu-form-menu";
-  formMenu.style.position = "fixed";
+  formMenu.style.position = "absolute";
   formMenu.style.visibility = "hidden";
   document.body.appendChild(formMenu);
 

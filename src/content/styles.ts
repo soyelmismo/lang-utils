@@ -248,7 +248,6 @@ export const CONTENT_STYLES = `
   cursor: pointer; z-index: 2147483645;
   box-shadow: 0 2px 8px rgba(0,0,0,.4);
   transition: all .15s;
-  position: fixed;
   min-width: 28px;
   text-align: left;
 }
