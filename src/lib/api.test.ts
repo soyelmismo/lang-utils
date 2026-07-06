@@ -36,6 +36,9 @@ describe('buildBody', () => {
   it('ensures stream: false is set in the body', () => {
     const result = buildBody(messages, '', baseSettings);
     expect(result.stream).toBe(false);
+  });
+});
+
 import { parseResponseText } from './api';
 
 describe('parseResponseText', () => {

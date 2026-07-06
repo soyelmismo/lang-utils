@@ -858,7 +858,7 @@ function setFieldValue(el: HTMLElement, text: string): void {
       selection.removeAllRanges();
       selection.addRange(range);
     }
-    document.execCommand("insertText", false, text);
+    const ok = document.execCommand("insertText", false, text);
     // After execCommand, place cursor at the end so the user keeps typing.
     setTimeout(() => {
       el.focus();
@@ -871,8 +871,11 @@ function setFieldValue(el: HTMLElement, text: string): void {
         selection2.addRange(range);
       }
     }, 0);
-    el.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertReplacementText", data: text }));
-    el.dispatchEvent(new Event("change", { bubbles: true }));
+    if (!ok) {
+      el.textContent = text;
+      el.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertReplacementText", data: text }));
+      el.dispatchEvent(new Event("change", { bubbles: true }));
+    }
   } else {
     const input = el as HTMLInputElement;
     // setRangeText is the modern, reliable way to replace field content.
