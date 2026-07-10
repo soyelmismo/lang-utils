@@ -59,44 +59,54 @@ export async function init(): Promise<void> {
   if (initPromise) return initPromise;
   initPromise = (async () => {
     log("Starting init...");
-  await i18n.init();
+    await i18n.init();
 
-  const storedModes = await storage.getModes();
-  if (!storedModes || storedModes.length === 0) {
-    currentModes = cloneDefaultModes();
-    await storage.setModes(currentModes);
-    log("Created default modes:", currentModes.length);
-  } else {
-    currentModes = storedModes;
-    // Migration: ensure all modes have required fields
-    let changed = false;
-    for (const m of currentModes as Array<Record<string, unknown> & AnyMode>) {
-      if (m.favorite === undefined) {
-        m.favorite = false;
-        changed = true;
+    const storedModes = await storage.getModes();
+    if (!storedModes || storedModes.length === 0) {
+      currentModes = cloneDefaultModes();
+      await storage.setModes(currentModes);
+      log("Created default modes:", currentModes.length);
+    } else {
+      currentModes = storedModes;
+      // Migration: ensure all modes have required fields
+      let changed = false;
+      for (const m of currentModes as Array<Record<string, unknown> & AnyMode>) {
+        if (m.favorite === undefined) {
+          m.favorite = false;
+          changed = true;
+        }
+        if (m.model === undefined) {
+          m.model = "";
+          changed = true;
+        }
+        if (m.type === undefined) {
+          (m as { type: string }).type = "single";
+          changed = true;
+        }
+        if (m.type === "group" && !m.subModes) {
+          (m as { subModes: unknown[] }).subModes = [];
+          changed = true;
+        }
       }
-      if (m.model === undefined) {
-        m.model = "";
-        changed = true;
+      
+      // Migration: ensure internal translate-page-mode is present
+      if (!currentModes.find(m => m.id === "translate-page-mode")) {
+        const defaultTranslatePageMode = DEFAULT_MODES.find(m => m.id === "translate-page-mode");
+        if (defaultTranslatePageMode) {
+          currentModes.push(JSON.parse(JSON.stringify(defaultTranslatePageMode)));
+          changed = true;
+        }
       }
-      if (m.type === undefined) {
-        (m as { type: string }).type = "single";
-        changed = true;
-      }
-      if (m.type === "group" && !m.subModes) {
-        (m as { subModes: unknown[] }).subModes = [];
-        changed = true;
-      }
+
+      if (changed) await storage.setModes(currentModes);
+      log("Loaded stored modes:", currentModes.length);
     }
-    if (changed) await storage.setModes(currentModes);
-    log("Loaded stored modes:", currentModes.length);
-  }
 
-  settings = await storage.getSettings();
-  await storage.setSettings(settings);
+    settings = await storage.getSettings();
+    await storage.setSettings(settings);
 
-  buildContextMenus();
-  log("Init complete. API key present:", !!settings.apiKey);
+    buildContextMenus();
+    log("Init complete. API key present:", !!settings.apiKey);
   })();
   return initPromise;
 }
@@ -108,6 +118,12 @@ export async function init(): Promise<void> {
 /** Remove all existing context menus and rebuild from currentModes. */
 export function buildContextMenus(): void {
   browser.contextMenus.removeAll().then(() => {
+    browser.contextMenus.create({
+      id: "translate-page-action",
+      title: msg("translate_page") || "Translate Page",
+      contexts: ["page"],
+    });
+
     browser.contextMenus.create({
       id: "lang-utils-root",
       title: "Lang Utils",
@@ -545,6 +561,60 @@ async function handleTranslateWrite(
   }
 }
 
+async function handleTranslatePageChunks(
+  texts: string[],
+  targetLang: string
+): Promise<Result> {
+  if (!settings.apiKey) {
+    return { ok: false, error: msg("bg_api_not_configured") };
+  }
+  if (!texts || texts.length === 0) return { ok: true, translatedTexts: [] };
+
+  const targetName = LANG_MAP[targetLang] || targetLang;
+  
+  let promptText = "";
+  const pageTranslateMode = findModeById(currentModes, "translate-page-mode");
+  if (pageTranslateMode && pageTranslateMode.mode.type === "single") {
+    promptText = pageTranslateMode.mode.prompt
+      .replace(/\{\{targetLang\}\}/g, targetName)
+      .replace(/\{\{selection\}\}/g, JSON.stringify(texts));
+  } else {
+    promptText =
+      `Translate the following JSON array of strings to ${targetName}. ` +
+      `Preserve the exact same number of items and array structure. ` +
+      `Reply ONLY with a valid JSON array, no explanations and no markdown backticks:\n\n` +
+      JSON.stringify(texts);
+  }
+
+  try {
+    const result = await callAPI(
+      promptText,
+      "",
+      settings,
+      "You are a strict JSON API. Reply only with a JSON array."
+    );
+
+    let translatedTexts: string[] = [];
+    try {
+      let cleaned = result;
+      // Extract array using regex if there's markdown or extra text
+      const match = result.match(/\[[\s\S]*\]/);
+      if (match) {
+        cleaned = match[0];
+      }
+      translatedTexts = JSON.parse(cleaned);
+      if (!Array.isArray(translatedTexts)) throw new Error("Not an array");
+    } catch (e) {
+      console.error("Failed to parse translation JSON", e, result);
+      return { ok: false, error: "Failed to parse translation response" };
+    }
+
+    return { ok: true, translatedTexts };
+  } catch (err) {
+    return { ok: false, error: (err as Error).message };
+  }
+}
+
 // ============================================
 //  POPUP WINDOW
 // ============================================
@@ -600,6 +670,15 @@ export async function onContextMenuClicked(
   // Chatbot shortcut
   if (info.menuItemId === "lang-utils-chatbot") {
     openChatbot(info.selectionText || "", resolvedTab);
+    return;
+  }
+
+  // Page translation shortcut
+  if (info.menuItemId === "translate-page-action") {
+    void sendToTab(resolvedTab.id, {
+      type: "start-page-translation",
+      targetLang: settings.favoriteTargetLang || settings.language || "en",
+    });
     return;
   }
 
@@ -811,6 +890,9 @@ export async function onMessage(
         message.targetLang,
         message.sourceLang
       );
+
+    case "translate-page-chunks":
+      return handleTranslatePageChunks(message.texts, message.targetLang);
 
     case "inject-markdown": {
       const tabId = sender.tab?.id;

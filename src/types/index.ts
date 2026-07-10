@@ -76,6 +76,7 @@ export interface ResultOk<T = unknown> {
   settings?: Settings;
   content?: string;
   data?: T;
+  translatedTexts?: string[];
 }
 
 export interface ResultErr {
@@ -160,13 +161,13 @@ export type BackgroundMessage =
   | { type: "chat-message"; messages: ChatMessage[] }
   | { type: "process-mode-from-tab"; modeId: string; subModeId: string; text: string; targetLang?: string }
   | {
-      type: "confirm-proceed";
-      proceed: boolean;
-      originalPrompt: string;
-      modeName: string;
-      model: string;
-      tabId?: number;
-    }
+    type: "confirm-proceed";
+    proceed: boolean;
+    originalPrompt: string;
+    modeName: string;
+    model: string;
+    tabId?: number;
+  }
   | { type: "reset-modes" }
   | { type: "close-popup" }
   | { type: "translate-mode"; modeId: string; targetLang: string }
@@ -175,6 +176,7 @@ export type BackgroundMessage =
   | { type: "get-translate-write-settings" }
   | { type: "save-translate-write-settings"; settings: TranslateWriteSettings }
   | { type: "translate-write"; text: string; targetLang: string; sourceLang: string }
+  | { type: "translate-page-chunks"; texts: string[]; targetLang: string }
   | { type: "inject-markdown" }
   | { type: "cleanup-ui" };
 
@@ -185,16 +187,17 @@ export type ContentMessage =
   | { type: "show-result"; title: string; content: string }
   | { type: "show-error"; title: string; content: string }
   | {
-      type: "show-confirm";
-      title: string;
-      content: string;
-      originalPrompt: string;
-      modeName: string;
-      model: string;
-    }
+    type: "show-confirm";
+    title: string;
+    content: string;
+    originalPrompt: string;
+    modeName: string;
+    model: string;
+  }
   | { type: "chat-response"; content: string }
   | { type: "chat-error"; content: string }
   | { type: "toggle-translate-write" }
+  | { type: "start-page-translation"; targetLang: string }
   | { type: "cleanup-ui" };
 
 /** Default settings used on first install. */

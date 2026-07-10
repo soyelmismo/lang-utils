@@ -35,6 +35,10 @@ const EN_MESSAGES: Record<MessageKey, string> = {
   extensionName: "Lang Utils",
   extensionDescription:
     "AI language utilities: translate, summarize, explain and more",
+  translate_page: "Translate Page",
+  chat_message_role_system: "System",
+  chat_message_role_user: "User",
+  chat_message_role_assistant: "Assistant",
   popup_title: "Lang Utils",
   popup_status_verifying: "Checking...",
   popup_status_configured: "API configured",

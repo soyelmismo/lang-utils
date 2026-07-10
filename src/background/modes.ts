@@ -134,6 +134,17 @@ export const DEFAULT_MODES: AnyMode[] = [
     model: "",
     type: "single",
   },
+  {
+    id: "translate-page-mode",
+    name: "Traducir Página (Interno)",
+    prompt:
+      "Translate the following JSON array of strings to {{targetLang}}. Preserve the exact same number of items and array structure. Reply ONLY with a valid JSON array, no explanations and no markdown backticks:\n\n{{selection}}",
+    isDefault: true,
+    protected: true,
+    favorite: false,
+    model: "",
+    type: "single",
+  },
 ];
 
 /** Deep clone of DEFAULT_MODES (used for reset). */
