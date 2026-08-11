@@ -12,11 +12,7 @@ import { loadAndApplyTheme, subscribeToSystemColorScheme } from "../lib/themes";
 import { CONTENT_STYLES } from "./styles";
 import type { AnyMode, Mode, ModeGroup, Settings } from "../types";
 import { DEFAULT_SETTINGS } from "../types";
-import { startPageTranslation, stopPageTranslation } from "./pageTranslator";
-
-// --- GLOBALS ---
-let pageTranslationActive = false;
-let pageTranslationBtn: HTMLButtonElement | null = null;
+import { startPageTranslation } from "./pageTranslator";
 
 // ---- Guard against double-injection ----
 declare global {
@@ -122,37 +118,11 @@ async function contentMain(): Promise<void> {
   setupToolbar();
   setupFormInjection();
   setupMessageHandler();
-  setupPageTranslationUI();
 
   // Live OS color-scheme sync. Only effective when mode === "auto".
   subscribeToSystemColorScheme(() => {
     void loadAndApplyTheme();
   });
-}
-
-function setupPageTranslationUI(): void {
-  pageTranslationBtn = document.createElement("button");
-  pageTranslationBtn.className = "lu-page-translate-btn";
-  pageTranslationBtn.title = i18n.msg("translate_page") || "Translate Page";
-  pageTranslationBtn.innerHTML = `
-    <svg viewBox="0 0 24 24">
-      <path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/>
-    </svg>
-  `;
-
-  pageTranslationBtn.addEventListener("click", () => {
-    if (pageTranslationActive) {
-      stopPageTranslation();
-      pageTranslationActive = false;
-      pageTranslationBtn!.style.backgroundColor = "var(--lu-bg)";
-    } else {
-      startPageTranslation(currentSettings.favoriteTargetLang || currentSettings.language || "en");
-      pageTranslationActive = true;
-      pageTranslationBtn!.style.backgroundColor = "var(--lu-active-bg, #005fcc)";
-    }
-  });
-
-  document.body.appendChild(pageTranslationBtn);
 }
 
 // ============================================================
@@ -1539,10 +1509,6 @@ function setupMessageHandler(): void {
         case "start-page-translation": {
           const { targetLang } = message as { targetLang: string };
           startPageTranslation(targetLang);
-          pageTranslationActive = true;
-          if (pageTranslationBtn) {
-            pageTranslationBtn.style.backgroundColor = "var(--lu-active-bg, #005fcc)";
-          }
           return;
         }
 
