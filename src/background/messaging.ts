@@ -38,7 +38,6 @@ import {
 // ---- Module state (single source of truth in background) ----
 let currentModes: AnyMode[] = [];
 let settings: Settings = { ...DEFAULT_SETTINGS };
-let popupWindowId: number | null = null;
 
 /** Tagged console.log with [Lang Utils] prefix. */
 export function log(...args: unknown[]): void {
@@ -613,42 +612,6 @@ async function handleTranslatePageChunks(
   } catch (err) {
     return { ok: false, error: (err as Error).message };
   }
-}
-
-// ============================================
-//  POPUP WINDOW
-// ============================================
-
-/** Open the popup as a persistent window (or focus if already open). */
-export function openPopupWindow(): void {
-  if (popupWindowId !== null) {
-    browser.windows
-      .get(popupWindowId)
-      .then(() => {
-        void browser.windows.update(popupWindowId!, { focused: true });
-      })
-      .catch(() => {
-        popupWindowId = null;
-        openPopupWindow();
-      });
-    return;
-  }
-  browser.windows
-    .create({
-      url: "popup/popup.html",
-      type: "popup",
-      width: 380,
-      height: 520,
-    })
-    .then((win: browser.Windows.Window) => {
-      popupWindowId = win.id ?? null;
-      browser.windows.onRemoved.addListener(function onRemoved(winId: number) {
-        if (winId === popupWindowId) {
-          popupWindowId = null;
-          browser.windows.onRemoved.removeListener(onRemoved);
-        }
-      });
-    });
 }
 
 // ============================================

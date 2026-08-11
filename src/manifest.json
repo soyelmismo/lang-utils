@@ -31,7 +31,8 @@
       "48": "icons/icon-48.png",
       "96": "icons/icon-96.png"
     },
-    "default_title": "Lang Utils"
+    "default_title": "Lang Utils",
+    "default_popup": "popup/popup.html"
   },
   "options_ui": {
     "page": "options/options.html",

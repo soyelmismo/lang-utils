@@ -11,7 +11,6 @@ import {
   init,
   onMessage,
   onContextMenuClicked,
-  openPopupWindow,
   log,
 } from "./messaging";
 import type { BackgroundMessage } from "../types";
@@ -27,15 +26,6 @@ browser.contextMenus.onClicked.addListener((info, tab) => {
     log("CLICK HANDLER ERROR:", (err as Error).message, (err as Error).stack);
   });
 });
-
-// ---- Toolbar icon click → open popup window ----
-// In MV3 the property is browser.action (Firefox/Chrome) or browser.browserAction (legacy).
-const action = browser.action || browser.browserAction;
-if (action && action.onClicked) {
-  action.onClicked.addListener(() => {
-    openPopupWindow();
-  });
-}
 
 // ---- Runtime messages ----
 browser.runtime.onMessage.addListener((message: unknown, sender: unknown) => {

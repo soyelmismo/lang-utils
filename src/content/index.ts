@@ -963,7 +963,7 @@ function showFormButton(el: HTMLElement): void {
   formArrow.setAttribute("aria-hidden", "true");
   formArrow.textContent = "\u25BE";
   formBtn.appendChild(formArrow);
-  formBtn.style.cssText = "position:absolute;z-index:2147483645;";
+  formBtn.style.cssText = "position:fixed;z-index:2147483645;";
   document.body.appendChild(formBtn);
 
   const btnW = FORM_BTN_WIDTH_PX;
@@ -977,8 +977,8 @@ function showFormButton(el: HTMLElement): void {
   if (left + btnW > vw - edge) left = vw - btnW - edge;
   if (top < edge) top = rect.bottom + edge;
   if (top + btnH > vh - edge) top = vh - btnH - edge;
-  formBtn.style.top = (top + window.scrollY) + "px";
-  formBtn.style.left = (left + window.scrollX) + "px";
+  formBtn.style.top = top + "px";
+  formBtn.style.left = left + "px";
 
   if (twActive && twTargetField === el) {
     formBtn.classList.add("lu-tw-active");
@@ -1126,22 +1126,29 @@ function buildFormMenuTranslateWriteSection(
 }
 
 function positionFormMenu(menu: HTMLDivElement, el: HTMLElement): void {
-  // Position menu
-  const rect = el.getBoundingClientRect();
+  // Anchor the menu to the LU button (or the field as fallback), snapped
+  // to its edge. Use fixed (viewport) coordinates so scrolling never
+  // desyncs the menu from its anchor.
+  const anchor = formBtn ?? el;
+  const rect = anchor.getBoundingClientRect();
   const menuW = menu.offsetWidth || FORM_MENU_WIDTH_PX;
   const menuH = menu.offsetHeight || (menu.children.length * FORM_MENU_ITEM_HEIGHT_PX + FORM_MENU_VERTICAL_PADDING_PX);
   const edge = VIEWPORT_EDGE_MARGIN_PX;
   const vw = window.innerWidth;
   const vh = window.innerHeight;
-  let top = rect.top - menuH - edge;
-  if (top < edge) top = rect.bottom + edge;
-  if (top + menuH > vh - edge) top = vh - menuH - edge;
-  let left = rect.right - menuW;
-  if (left < edge) left = edge;
+  const gap = 2;
+
+  let top = rect.bottom + gap;
+  if (top + menuH > vh - edge) top = rect.top - menuH - gap;
+  if (top < edge) top = edge;
+
+  let left = rect.left;
   if (left + menuW > vw - edge) left = vw - menuW - edge;
-  menu.style.position = "absolute";
-  menu.style.top = (top + window.scrollY) + "px";
-  menu.style.left = (left + window.scrollX) + "px";
+  if (left < edge) left = edge;
+
+  menu.style.position = "fixed";
+  menu.style.top = top + "px";
+  menu.style.left = left + "px";
   menu.style.visibility = "";
 }
 

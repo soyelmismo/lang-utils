@@ -3,9 +3,6 @@
 //  Persistent window with favorites + all modes.
 // ============================================
 
-/** Delay (ms) before closing the popup after it loses focus. */
-const POPUP_BLUR_CLOSE_DELAY_MS = 150;
-
 import browser from "../lib/browser-compat";
 import { i18n, msg } from "../lib/i18n";
 import { loadAndApplyTheme, subscribeToSystemColorScheme } from "../lib/themes";
@@ -23,13 +20,6 @@ async function popupMain(): Promise<void> {
   await checkAPIStatus();
   await loadModes();
   setupButtons();
-
-  // Close popup window when it loses focus (browser action behavior)
-  window.addEventListener("blur", () => {
-    setTimeout(() => {
-      window.close();
-    }, POPUP_BLUR_CLOSE_DELAY_MS);
-  });
 
   // Live OS color-scheme sync while the popup is open. Only effective
   // when mode === "auto".
@@ -142,7 +132,7 @@ function buildModeItem(mode: AnyMode, isFav: boolean): HTMLDivElement {
 function setupButtons(): void {
   const closeBtn = $btn("close-popup-btn");
   closeBtn?.addEventListener("click", () => {
-    void browser.runtime.sendMessage({ type: "close-popup" });
+    window.close();
   });
 
   const settingsBtn = $btn("settings-btn");

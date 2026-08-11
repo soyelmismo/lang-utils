@@ -13,13 +13,15 @@ body {
   color: var(--lu-text);
   font-family: var(--lu-font);
   font-size: 14px;
-  min-height: 100%;
+  width: 360px;
+  height: 520px;
+  overflow: hidden;
 }
 
 .popup-container {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100%;
 }
 
 /* Header */
