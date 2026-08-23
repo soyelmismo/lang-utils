@@ -6,6 +6,7 @@
 // ============================================
 
 import browser from "./browser-compat";
+import { storage } from "./storage";
 import type { MessageKey } from "../types/messages";
 
 /** Map of supported language codes → native name (the language's own name) and ES/EN fallbacks. */
@@ -261,8 +262,7 @@ async function init(): Promise<void> {
   initPromise = (async () => {
     let locale: string | null = null;
     try {
-      const stored = await browser.storage.local.get(["uiLocale"]);
-      locale = (stored.uiLocale as string) || null;
+      locale = (await storage.getUiLocale()) || null;
     } catch {
       // ignore
     }
@@ -373,7 +373,7 @@ export function getLocale(): string {
 
 /** Set the locale, persist it, and load it. */
 async function setLocale(code: string): Promise<void> {
-  await browser.storage.local.set({ uiLocale: code });
+  await storage.setUiLocale(code);
   await loadLocale(code);
 }
 
