@@ -197,6 +197,43 @@ export async function markdownToFragmentWithUpgrade(
 /**
  * Copy text to the clipboard with a temporary "Copied!" label on the button.
  */
+/**
+ * Safely parse a JSON array from a string response that may contain markdown code fences
+ * or leading/trailing text/explanations.
+ */
+export function parseJsonArray<T = unknown>(input: string): T[] {
+  let cleaned = input.trim();
+
+  // Strip markdown code block wrappers if present (e.g. ```json ... ``` or ``` ...)
+  const codeBlockMatch = cleaned.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+  if (codeBlockMatch && codeBlockMatch[1] !== undefined) {
+    cleaned = codeBlockMatch[1].trim();
+  }
+
+  // First try direct JSON parse
+  try {
+    const parsed = JSON.parse(cleaned);
+    if (Array.isArray(parsed)) {
+      return parsed as T[];
+    }
+  } catch {
+    // Ignore error and fall back to scanning for array boundaries
+  }
+
+  // Scan for bracket-delimited array bounds '[' and ']' if wrapped in markdown/extra text
+  const startIdx = cleaned.indexOf("[");
+  const endIdx = cleaned.lastIndexOf("]");
+  if (startIdx !== -1 && endIdx > startIdx) {
+    const substring = cleaned.substring(startIdx, endIdx + 1);
+    const parsed = JSON.parse(substring);
+    if (Array.isArray(parsed)) {
+      return parsed as T[];
+    }
+  }
+
+  throw new Error("Parsed result is not a valid JSON array");
+}
+
 export function copyWithFeedback(
   text: string,
   btnEl: HTMLElement | null,
