@@ -226,18 +226,22 @@ async function translateBatch(pieces: PieceToTranslate[]) {
       let offset = 0;
       
       for (const piece of pieces) {
-        for (let i = 0; i < piece.nodes.length; i++) {
-          const originalTextNode = piece.nodes[i]!;
-          const translated = translatedTexts[offset] || originalTextNode.textContent || "";
+        const nodes = piece.nodes;
+        for (let i = 0; i < nodes.length; i++) {
+          const originalTextNode = nodes[i]!;
+          const origText = originalTextNode.nodeValue || "";
+          const translated = translatedTexts[offset] || origText;
           offset++;
           
           nodesToRestore.push({
             node: originalTextNode,
-            originalText: originalTextNode.textContent || "",
+            originalText: origText,
             translatedText: translated
           });
           
-          originalTextNode.textContent = translated;
+          if (originalTextNode.nodeValue !== translated) {
+            originalTextNode.nodeValue = translated;
+          }
         }
         piece.isTranslated = true;
       }

@@ -1,12 +1,25 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   getPiecesToTranslate,
+  startPageTranslation,
+  stopPageTranslation,
   isNoTranslateNode,
 } from "./pageTranslator";
+import browser from "../lib/browser-compat";
+
+vi.mock("../lib/browser-compat", () => ({
+  default: {
+    runtime: {
+      sendMessage: vi.fn(),
+    },
+  },
+}));
 
 describe("pageTranslator", () => {
   beforeEach(() => {
     document.body.innerHTML = "";
+    stopPageTranslation();
+    vi.clearAllMocks();
   });
 
   describe("isNoTranslateNode", () => {
@@ -134,5 +147,51 @@ describe("pageTranslator", () => {
 
       expect(allText).toContain("Shadow DOM text");
     });
+  });
+
+  it("translates page batch and allows restoring original text", async () => {
+    const container = document.createElement("div");
+    const p1 = document.createElement("p");
+    p1.textContent = "Hello";
+    const p2 = document.createElement("p");
+    p2.textContent = "World";
+    container.appendChild(p1);
+    container.appendChild(p2);
+    document.body.appendChild(container);
+
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue({
+      top: 100,
+      bottom: 200,
+      left: 0,
+      right: 100,
+      width: 100,
+      height: 100,
+      x: 0,
+      y: 100,
+      toJSON: () => {},
+    });
+
+    (browser.runtime.sendMessage as any).mockResolvedValue({
+      ok: true,
+      translatedTexts: ["Hola", "Mundo"],
+    });
+
+    startPageTranslation("es");
+
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(browser.runtime.sendMessage).toHaveBeenCalledWith({
+      type: "translate-page-chunks",
+      texts: ["Hello", "World"],
+      targetLang: "es",
+    });
+
+    expect(p1.textContent).toBe("Hola");
+    expect(p2.textContent).toBe("Mundo");
+
+    stopPageTranslation();
+
+    expect(p1.textContent).toBe("Hello");
+    expect(p2.textContent).toBe("World");
   });
 });
