@@ -12,6 +12,11 @@ const PARSE_ERROR_PREVIEW_CHARS = 300;
 
 import { ChatCompletionResponse, ChatMessage, Settings } from "../types";
 
+/** Helper to check if a value is a non-null, non-array object. */
+function isObject(val: unknown): val is Record<string, unknown> {
+  return typeof val === "object" && val !== null && !Array.isArray(val);
+}
+
 /** Build the request body for an OpenAI-compatible chat completion. */
 export function buildBody(
   messages: ChatMessage[],
@@ -42,17 +47,31 @@ export function parseResponseText(text: string): string {
   // Try plain JSON first
   try {
     const data = JSON.parse(text) as ChatCompletionResponse;
-    if (data.error) {
-      const err =
-        typeof data.error === "string"
-          ? data.error
-          : data.error.message || data.error.msg || JSON.stringify(data.error);
-      throw new Error("API error: " + err);
+    if (isObject(data)) {
+      if (data.error) {
+        let errStr: string;
+        if (typeof data.error === "string") {
+          errStr = data.error;
+        } else if (isObject(data.error)) {
+          const msg = data.error.message ?? data.error.msg;
+          errStr = typeof msg === "string" ? msg : JSON.stringify(data.error);
+        } else {
+          errStr = String(data.error);
+        }
+        throw new Error("API error: " + errStr);
+      }
+      if (Array.isArray(data.choices) && data.choices.length > 0) {
+        const firstChoice = data.choices[0];
+        if (
+          isObject(firstChoice) &&
+          isObject(firstChoice.message) &&
+          typeof firstChoice.message.content === "string"
+        ) {
+          return firstChoice.message.content;
+        }
+      }
     }
-    if (data.choices && data.choices[0]?.message?.content) {
-      return data.choices[0].message.content || "";
-    }
-    // No choices found, fall through to SSE parsing
+    // No choices found or non-object JSON, fall through to SSE parsing
   } catch (e) {
     if (!(e instanceof SyntaxError)) throw e;
     // Not JSON → try SSE
@@ -67,9 +86,17 @@ export function parseResponseText(text: string): string {
     if (trimmed.startsWith("data: ")) {
       try {
         const chunk = JSON.parse(trimmed.slice(SSE_DATA_PREFIX_LEN)) as ChatCompletionResponse;
-        const choice = chunk.choices?.[0];
-        if (choice?.delta?.content) result.push(choice.delta.content);
-        if (choice?.message?.content) result.push(choice.message.content);
+        if (isObject(chunk) && Array.isArray(chunk.choices) && chunk.choices.length > 0) {
+          const choice = chunk.choices[0];
+          if (isObject(choice)) {
+            if (isObject(choice.delta) && typeof choice.delta.content === "string") {
+              result.push(choice.delta.content);
+            }
+            if (isObject(choice.message) && typeof choice.message.content === "string") {
+              result.push(choice.message.content);
+            }
+          }
+        }
       } catch {
         // ignore malformed chunks
       }
