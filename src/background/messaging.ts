@@ -238,7 +238,8 @@ async function ensureContentScript(tabId: number): Promise<boolean> {
     })) as { pong?: boolean } | undefined;
     if (response && response.pong) return true;
   } catch {
-    // not injected yet
+    // Ping failed: content script is not injected yet or tab does not respond to messages
+    log("Ping failed for tab", tabId, "- content script not injected yet");
   }
   // Try scripting API (MV3). If not available, the content_scripts
   // entry in manifest.json should still have injected it on page load
