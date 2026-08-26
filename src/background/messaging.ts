@@ -196,15 +196,17 @@ async function persistModes(): Promise<void> {
 export async function broadcastUpdated(messageType: string): Promise<void> {
   try {
     const tabs = await browser.tabs.query({});
-    for (const t of tabs) {
-      if (typeof t.id === "number") {
-        void browser.tabs
-          .sendMessage(t.id, { type: messageType })
-          .catch(() => {
+    await Promise.all(
+      tabs.map(async (t) => {
+        if (typeof t.id === "number") {
+          try {
+            await browser.tabs.sendMessage(t.id, { type: messageType });
+          } catch {
             // tab may not have a content script (e.g. chrome://, about:)
-          });
-      }
-    }
+          }
+        }
+      })
+    );
   } catch (err) {
     log("broadcastUpdated failed:", (err as Error).message);
   }
