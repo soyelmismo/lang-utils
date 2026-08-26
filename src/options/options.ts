@@ -5,6 +5,7 @@
 // ============================================
 
 import browser from "../lib/browser-compat";
+import { storage } from "../lib/storage";
 import { i18n, msg, nativeLangName, langCodes } from "../lib/i18n";
 import {
   loadAndApplyTheme,
@@ -871,7 +872,7 @@ function setupLanguageSwitcher(): void {
   langSelect?.addEventListener("change", async () => {
     if (!langSelect) return;
     const newLocale = langSelect.value;
-    await browser.storage.local.set({ uiLocale: newLocale });
+    await storage.setUiLocale(newLocale);
     currentSettings.language = newLocale;
     await browser.runtime.sendMessage({
       type: "save-settings",
