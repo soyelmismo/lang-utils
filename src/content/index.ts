@@ -114,6 +114,9 @@ async function contentMain(): Promise<void> {
   // eslint-disable-next-line no-console
   console.log("[Lang Utils Content] Loaded in", window.location.href);
 
+  loadTWTabState();
+  void loadTWSettings();
+
   setupPanel();
   setupToolbar();
   setupFormInjection();
@@ -850,14 +853,35 @@ let formLoadingEl: HTMLDivElement | null = null;
 let activeField: HTMLElement | null = null;
 let fieldOriginal: string | null = null;
 
-// Translate-write state (per-field)
+// Translate-write state (tab-wide: once activated, it applies to any field
+// the user focuses. State persists across page reloads in the same tab via
+// sessionStorage and dies when the tab closes.)
+const TW_TAB_STATE_KEY = "lu-tw-tab-state";
 let twActive = false;
-let twTargetField: HTMLElement | null = null;
 let twDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 let twDebounceMs = 1500;
 let twTargetLang = "en";
 let twTranslating = false;
 let twLastTranslatedText = "";
+let twRequestSeq = 0;
+let twMutationObserver: MutationObserver | null = null;
+let twObservedField: HTMLElement | null = null;
+
+function persistTWTabState(): void {
+  try {
+    sessionStorage.setItem(TW_TAB_STATE_KEY, JSON.stringify({ active: twActive, lang: twTargetLang }));
+  } catch { /* sessionStorage unavailable */ }
+}
+
+function loadTWTabState(): void {
+  try {
+    const raw = sessionStorage.getItem(TW_TAB_STATE_KEY);
+    if (!raw) return;
+    const s = JSON.parse(raw) as { active?: boolean; lang?: string };
+    twActive = s.active === true;
+    if (s.lang) twTargetLang = s.lang;
+  } catch { /* ignore */ }
+}
 
 function removeFormUI(): void {
   if (formBtn) {
@@ -872,6 +896,10 @@ function removeFormUI(): void {
     formLoadingEl.remove();
     formLoadingEl = null;
   }
+  if (activeField) {
+    activeField.classList.remove("lu-tw-field-active");
+  }
+  watchTWField(null);
 }
 
 function isFormElement(el: Element | null): el is HTMLElement {
@@ -880,7 +908,7 @@ function isFormElement(el: Element | null): el is HTMLElement {
   if (tag === "TEXTAREA") return true;
   if (tag === "INPUT") {
     const t = (el as HTMLInputElement).type;
-    return t === "text" || t === "search" || t === "" || t === "url" || t === "email";
+    return t === "text" || t === "search" || t === "" || t === "url" || t === "email" || t === "password" || t === "number" || t === "tel";
   }
   if ((el as HTMLElement).isContentEditable) return true;
   return false;
@@ -952,6 +980,7 @@ function setFieldValue(el: HTMLElement, text: string): void {
 function showFormButton(el: HTMLElement): void {
   removeFormUI();
   activeField = el;
+  watchTWField(el);
   const rect = el.getBoundingClientRect();
 
   formBtn = document.createElement("button");
@@ -980,8 +1009,10 @@ function showFormButton(el: HTMLElement): void {
   formBtn.style.top = top + "px";
   formBtn.style.left = left + "px";
 
-  if (twActive && twTargetField === el) {
+  if (twActive) {
     formBtn.classList.add("lu-tw-active");
+    el.classList.add("lu-tw-field-active");
+    twLastTranslatedText = "";
   }
 
   formBtn.addEventListener("mousedown", (e: MouseEvent) => {
@@ -1065,7 +1096,7 @@ function buildFormMenuTranslateWriteSection(
   divider.className = "lu-fm-divider";
   menu.appendChild(divider);
 
-  if (twActive && twTargetField === el) {
+  if (twActive) {
     // Active: show language picker + stop
     const header = document.createElement("div");
     header.className = "lu-fm-tw-header";
@@ -1084,9 +1115,10 @@ function buildFormMenuTranslateWriteSection(
         e.preventDefault();
         e.stopPropagation();
         twTargetLang = code;
+        persistTWTabState();
         void saveTWSettings();
-        if (twTargetField && getFieldValue(twTargetField).trim()) {
-          void triggerTranslate(twTargetField);
+        if (activeField && getFieldValue(activeField).trim()) {
+          void triggerTranslate(activeField);
         }
         removeFormUI();
         showFormButton(el);
@@ -1101,7 +1133,7 @@ function buildFormMenuTranslateWriteSection(
     stopItem.addEventListener("mousedown", (e: MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      deactivateTW(el);
+      deactivateTW();
       removeFormUI();
       showFormButton(el);
     });
@@ -1116,7 +1148,7 @@ function buildFormMenuTranslateWriteSection(
     activateItem.addEventListener("mousedown", (e: MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      activateTW(el);
+      activateTW();
       removeFormUI();
       showFormButton(el);
       showFormMenu(el);
@@ -1170,44 +1202,55 @@ function showFormMenu(el: HTMLElement): void {
   positionFormMenu(formMenu, el);
 }
 
-// ---- Translate-write ----
+// ---- Translate-write (tab-wide) ----
 
-function activateTW(el: HTMLElement): void {
+function activateTW(): void {
   twActive = true;
-  twTargetField = el;
   twTargetLang = twTargetLang || "en";
-  el.classList.add("lu-tw-field-active");
-  el.addEventListener("input", twInputHandler);
+  persistTWTabState();
   void loadTWSettings();
+  if (activeField && isFormElement(activeField)) {
+    watchTWField(activeField);
+  }
 }
 
-function deactivateTW(el: HTMLElement | null): void {
+function deactivateTW(): void {
   twActive = false;
   if (twDebounceTimer) {
     clearTimeout(twDebounceTimer);
     twDebounceTimer = null;
   }
-  if (el) {
-    el.classList.remove("lu-tw-field-active");
-    el.removeEventListener("input", twInputHandler);
-  }
-  twTargetField = null;
   twTranslating = false;
+  watchTWField(null);
+  persistTWTabState();
 }
 
 function twInputHandler(e: Event): void {
-  let el = e.target as HTMLElement;
-  if (
-    twTargetField &&
-    twTargetField.isContentEditable &&
-    twTargetField.contains(el)
-  ) {
-    el = twTargetField;
+  if (!twActive) return;
+  const target = e.target as HTMLElement;
+  let el = target;
+  if (!isFormElement(target)) {
+    // contentEditable may report the caret/text node as target; walk up.
+    let node: HTMLElement | null = target as HTMLElement;
+    while (node !== null && node.isContentEditable !== true) {
+      node = node.parentElement;
+    }
+    if (node) el = node;
   }
-  if (!twActive || twTargetField !== el) return;
-  if (twTranslating) return;
+  if (!isFormElement(el)) return;
+  queueTWTranslate(el);
+}
+
+/** Debounce + queue a translate-write for the given field. */
+function queueTWTranslate(el: HTMLElement): void {
+  if (!twActive) return;
 
   const text = getFieldValue(el);
+  twRequestSeq++;                            // any keystroke invalidates in-flight work
+  if (twTranslating) {
+    twTranslating = false;                   // allow triggerTranslate of the new text
+  }
+  el.style.opacity = "";
   if (text === twLastTranslatedText) return;
 
   if (twDebounceTimer) {
@@ -1222,11 +1265,35 @@ function twInputHandler(e: Event): void {
   }, twDebounceMs);
 }
 
+/**
+ * Start/stop a MutationObserver on a field. Some sites (Instagram/X with
+ * Lexical/ProseMirror) don't fire standard `input` events on the DOM, so we
+ * watch for text mutations as a fallback.
+ */
+function watchTWField(el: HTMLElement | null): void {
+  if (twMutationObserver) {
+    twMutationObserver.disconnect();
+    twMutationObserver = null;
+  }
+  twObservedField = el;
+  if (!el || !twActive) return;
+
+  twMutationObserver = new MutationObserver(() => {
+    if (twObservedField) queueTWTranslate(twObservedField);
+  });
+  twMutationObserver.observe(el, {
+    characterData: true,
+    childList: true,
+    subtree: true,
+  });
+}
+
 async function triggerTranslate(el: HTMLElement): Promise<void> {
   if (twTranslating) return;
   const text = getFieldValue(el);
   if (!text.trim()) return;
 
+  const seq = ++twRequestSeq;              // track this specific request
   twTranslating = true;
   el.style.opacity = "0.6";
 
@@ -1238,17 +1305,33 @@ async function triggerTranslate(el: HTMLElement): Promise<void> {
       sourceLang: "",
     })) as { ok?: boolean; content?: string };
 
+    // If the user changed the field while we were translating (e.g. selected
+    // all and deleted), drop the stale response so we don't overwrite their edit.
+    if (seq !== twRequestSeq) return;
+    const current = getFieldValue(el);
+    if (current.trim() !== text.trim()) return;
+
     if (resp && resp.ok && resp.content) {
       twLastTranslatedText = resp.content;
       setFieldValue(el, resp.content);
     }
   } catch (err) {
-     
-    console.error("[Lang Utils] Translate-write error:", (err as Error).message);
+    // "Extension context invalidated" = the extension was reloaded/updated
+    // while this page was open. Retrying won't help; the page needs a reload
+    // to get a fresh content script, so just stop quietly.
+    const msg = (err as Error).message;
+    if (msg && msg.includes("Extension context invalidated")) {
+      twActive = false;
+      persistTWTabState();
+      return;
+    }
+    console.error("[Lang Utils] Translate-write error:", msg);
+  } finally {
+    if (seq === twRequestSeq) {
+      twTranslating = false;
+      el.style.opacity = "";
+    }
   }
-
-  twTranslating = false;
-  el.style.opacity = "";
 }
 
 function saveTWSettings(): Promise<void> {
@@ -1396,6 +1479,10 @@ function setupFormInjection(): void {
       }
     }, FORM_CLICK_DEBOUNCE_MS);
   });
+
+  // Tab-wide translate-write: a single input listener covers every field.
+  // Capture phase is required: React/Instagram stop input bubbling.
+  document.addEventListener("input", twInputHandler, true);
 }
 
 // ============================================================
@@ -1500,12 +1587,12 @@ function setupMessageHandler(): void {
         }
 
         case "toggle-translate-write": {
+          if (twActive) {
+            deactivateTW();
+          } else {
+            activateTW();
+          }
           if (activeField && isFormElement(activeField)) {
-            if (twActive && twTargetField === activeField) {
-              deactivateTW(activeField);
-            } else {
-              activateTW(activeField);
-            }
             removeFormUI();
             showFormButton(activeField);
             showFormMenu(activeField);

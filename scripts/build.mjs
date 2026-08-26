@@ -58,7 +58,6 @@ async function writeManifest() {
     // Chrome requires service_worker (not scripts)
     manifest.background = {
       service_worker: "background.js",
-      type: "module",
     };
     // Chrome MV3 doesn't support browser_specific_settings
     delete manifest.browser_specific_settings;
@@ -76,7 +75,6 @@ async function writeManifest() {
     // since v121+. For older Firefox, use --target=firefox.
     manifest.background = {
       service_worker: "background.js",
-      type: "module",
     };
   }
 
