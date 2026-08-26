@@ -8,6 +8,7 @@
 import browser from "../lib/browser-compat";
 import { storage } from "../lib/storage";
 import { i18n, msg, nativeLangName } from "../lib/i18n";
+import { parseJsonArray } from "../lib/utils";
 import {
   buildBody,
   callAPI,
@@ -595,14 +596,7 @@ async function handleTranslatePageChunks(
 
     let translatedTexts: string[] = [];
     try {
-      let cleaned = result;
-      // Extract array using regex if there's markdown or extra text
-      const match = result.match(/\[[\s\S]*\]/);
-      if (match) {
-        cleaned = match[0];
-      }
-      translatedTexts = JSON.parse(cleaned);
-      if (!Array.isArray(translatedTexts)) throw new Error("Not an array");
+      translatedTexts = parseJsonArray<string>(result);
     } catch (e) {
       console.error("Failed to parse translation JSON", e, result);
       return { ok: false, error: "Failed to parse translation response" };
