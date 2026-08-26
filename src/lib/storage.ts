@@ -1,6 +1,7 @@
 // ============================================
 // Lang Utils - Typed storage helpers
 // Wraps browser.storage.local with typed getters/setters.
+// Encrypts sensitive fields (apiKey) using Web Crypto API (AES-GCM).
 // ============================================
 
 import browser from "./browser-compat";
@@ -13,6 +14,99 @@ import {
   ThemeSettings,
   TranslateWriteSettings,
 } from "../types";
+
+const KEY_ALIAS = "enc_key_v1";
+const AES_KEY_LENGTH = 256;
+const IV_LENGTH_BYTES = 12;
+const HEX_PAD = 2;
+const RADIX_HEX = 16;
+const SPLIT_PARTS_COUNT = 3;
+
+/** Get or create a persistent AES-GCM CryptoKey stored in local storage. */
+async function getOrCreateEncryptionKey(): Promise<CryptoKey> {
+  const stored = await browser.storage.local.get([KEY_ALIAS]);
+  if (stored[KEY_ALIAS]) {
+    const rawKey = new Uint8Array(stored[KEY_ALIAS] as number[]);
+    return await crypto.subtle.importKey(
+      "raw",
+      rawKey,
+      { name: "AES-GCM", length: AES_KEY_LENGTH },
+      true,
+      ["encrypt", "decrypt"]
+    );
+  }
+
+  const key = await crypto.subtle.generateKey(
+    { name: "AES-GCM", length: AES_KEY_LENGTH },
+    true,
+    ["encrypt", "decrypt"]
+  );
+
+  const exported = await crypto.subtle.exportKey("raw", key);
+  await browser.storage.local.set({
+    [KEY_ALIAS]: Array.from(new Uint8Array(exported)),
+  });
+
+  return key;
+}
+
+/** Encrypt text value using AES-GCM. Returns format "enc:iv_hex:ciphertext_hex" */
+async function encryptValue(plainText: string): Promise<string> {
+  if (!plainText) return "";
+  const key = await getOrCreateEncryptionKey();
+  const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH_BYTES));
+  const encoded = new TextEncoder().encode(plainText);
+  const ciphertextBuffer = await crypto.subtle.encrypt(
+    { name: "AES-GCM", iv },
+    key,
+    encoded
+  );
+
+  const ivHex = Array.from(iv)
+    .map((b) => b.toString(RADIX_HEX).padStart(HEX_PAD, "0"))
+    .join("");
+  const cipherHex = Array.from(new Uint8Array(ciphertextBuffer))
+    .map((b) => b.toString(RADIX_HEX).padStart(HEX_PAD, "0"))
+    .join("");
+
+  return `enc:${ivHex}:${cipherHex}`;
+}
+
+/** Decrypt "enc:iv_hex:ciphertext_hex" formatted string. */
+async function decryptValue(encryptedText: string): Promise<string> {
+  if (!encryptedText) return "";
+  if (!encryptedText.startsWith("enc:")) {
+    // Return raw text if not encrypted (backwards compatibility / unencrypted legacy)
+    return encryptedText;
+  }
+
+  try {
+    const parts = encryptedText.split(":");
+    if (parts.length !== SPLIT_PARTS_COUNT) return encryptedText;
+
+    const ivHex = parts[1] ?? "";
+    const cipherHex = parts[2] ?? "";
+
+    if (!ivHex || !cipherHex) return encryptedText;
+
+    const ivMatches = ivHex.match(/.{1,2}/g) || [];
+    const cipherMatches = cipherHex.match(/.{1,2}/g) || [];
+
+    const iv = new Uint8Array(ivMatches.map((byte) => parseInt(byte, RADIX_HEX)));
+    const ciphertext = new Uint8Array(cipherMatches.map((byte) => parseInt(byte, RADIX_HEX)));
+
+    const key = await getOrCreateEncryptionKey();
+    const decryptedBuffer = await crypto.subtle.decrypt(
+      { name: "AES-GCM", iv },
+      key,
+      ciphertext
+    );
+
+    return new TextDecoder().decode(decryptedBuffer);
+  } catch {
+    return encryptedText;
+  }
+}
 
 /** Type-safe wrapper around browser.storage.local. */
 export const storage = {
@@ -43,10 +137,19 @@ export const storage = {
 
   async getSettings(): Promise<Settings> {
     const stored = (await this.get<Partial<Settings>>("settings")) || {};
-    return { ...DEFAULT_SETTINGS, ...stored };
+    const settings = { ...DEFAULT_SETTINGS, ...stored };
+    if (settings.apiKey) {
+      settings.apiKey = await decryptValue(settings.apiKey);
+    }
+    return settings;
   },
+
   async setSettings(settings: Settings): Promise<void> {
-    await this.set("settings", settings);
+    const settingsToStore = { ...settings };
+    if (settingsToStore.apiKey) {
+      settingsToStore.apiKey = await encryptValue(settingsToStore.apiKey);
+    }
+    await this.set("settings", settingsToStore);
   },
 
   async getTranslateWriteSettings(): Promise<TranslateWriteSettings> {
