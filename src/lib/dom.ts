@@ -8,37 +8,21 @@ export function $<T extends HTMLElement = HTMLElement>(id: string): T | null {
   return document.getElementById(id) as T | null;
 }
 
-export function $btn(id: string): HTMLButtonElement | null {
-  return document.getElementById(id) as HTMLButtonElement | null;
-}
+export const $btn = (id: string): HTMLButtonElement | null => $<HTMLButtonElement>(id);
 
-export function $input(id: string): HTMLInputElement | null {
-  return document.getElementById(id) as HTMLInputElement | null;
-}
+export const $input = (id: string): HTMLInputElement | null => $<HTMLInputElement>(id);
 
-export function $textarea(id: string): HTMLTextAreaElement | null {
-  return document.getElementById(id) as HTMLTextAreaElement | null;
-}
+export const $textarea = (id: string): HTMLTextAreaElement | null => $<HTMLTextAreaElement>(id);
 
-export function $select(id: string): HTMLSelectElement | null {
-  return document.getElementById(id) as HTMLSelectElement | null;
-}
+export const $select = (id: string): HTMLSelectElement | null => $<HTMLSelectElement>(id);
 
-export function $div(id: string): HTMLDivElement | null {
-  return document.getElementById(id) as HTMLDivElement | null;
-}
+export const $div = (id: string): HTMLDivElement | null => $<HTMLDivElement>(id);
 
-export function $span(id: string): HTMLSpanElement | null {
-  return document.getElementById(id) as HTMLSpanElement | null;
-}
+export const $span = (id: string): HTMLSpanElement | null => $<HTMLSpanElement>(id);
 
-export function $heading(id: string): HTMLHeadingElement | null {
-  return document.getElementById(id) as HTMLHeadingElement | null;
-}
+export const $heading = (id: string): HTMLHeadingElement | null => $<HTMLHeadingElement>(id);
 
-export function $form(id: string): HTMLFormElement | null {
-  return document.getElementById(id) as HTMLFormElement | null;
-}
+export const $form = (id: string): HTMLFormElement | null => $<HTMLFormElement>(id);
 
 /** Get the value of a form-like element by id, or empty string. */
 export function getValue(id: string): string {
