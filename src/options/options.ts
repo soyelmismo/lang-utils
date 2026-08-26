@@ -127,8 +127,8 @@ async function loadSettings(): Promise<void> {
   ) as HTMLInputElement | null;
   if (autoCb) autoCb.checked = currentSettings.autoSetFavorite === true;
 
-  const stored = await browser.storage.local.get(["uiLocale"]);
-  const locale = (stored.uiLocale as string) || currentSettings.language || "es";
+  const storedLocale = await storage.getUiLocale();
+  const locale = storedLocale || currentSettings.language || "es";
   setValue("main-language", locale);
 }
 
