@@ -18,6 +18,7 @@ import {
 } from "../lib/api";
 import {
   AnyMode,
+  BackgroundMessage,
   ChatMessage,
   Result,
   Settings,
@@ -691,8 +692,6 @@ export async function onContextMenuClicked(
 // ============================================
 //  MESSAGE ROUTER
 // ============================================
-
-import type { BackgroundMessage } from "../types";
 
 /** Handle a runtime message from popup/options/chatbot/content. */
 export async function onMessage(
