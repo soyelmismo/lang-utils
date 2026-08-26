@@ -105,4 +105,18 @@ data: {"choices":[{"delta":{"content":" Valid 2"}}]}
     const invalidResponse = "This is not valid JSON or SSE";
     expect(() => parseResponseText(invalidResponse)).toThrowError("Could not parse API response: This is not valid JSON or SSE");
   });
+
+  it('handles non-object JSON gracefully (null, numbers, booleans, arrays)', () => {
+    expect(() => parseResponseText("null")).toThrowError("Could not parse API response: null");
+    expect(() => parseResponseText("123")).toThrowError("Could not parse API response: 123");
+    expect(() => parseResponseText("true")).toThrowError("Could not parse API response: true");
+    expect(() => parseResponseText("[1, 2, 3]")).toThrowError("Could not parse API response: [1, 2, 3]");
+  });
+
+  it('handles malformed choices and message formats safely', () => {
+    expect(() => parseResponseText(JSON.stringify({ choices: "not an array" }))).toThrowError("Could not parse API response");
+    expect(() => parseResponseText(JSON.stringify({ choices: [null] }))).toThrowError("Could not parse API response");
+    expect(() => parseResponseText(JSON.stringify({ choices: [{ message: null }] }))).toThrowError("Could not parse API response");
+    expect(() => parseResponseText(JSON.stringify({ choices: [{ message: { content: 123 } }] }))).toThrowError("Could not parse API response");
+  });
 });
